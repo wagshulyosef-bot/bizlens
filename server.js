@@ -1,36 +1,79 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme';
+const RAILWAY_API_TOKEN = process.env.RAILWAY_API_TOKEN;
+const RAILWAY_PROJECT_ID = process.env.RAILWAY_PROJECT_ID;
+const RAILWAY_ENVIRONMENT_ID = process.env.RAILWAY_ENVIRONMENT_ID;
+const RAILWAY_SERVICE_ID = process.env.RAILWAY_SERVICE_ID;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── IN-MEMORY DEVICE STORE ───────────────────────────────────
-// In production you'd use a database — this persists until server restarts
-// For a more permanent solution, use a simple JSON file
-const fs = require('fs');
-const DB_FILE = path.join(__dirname, 'devices.json');
+// Primary store is in memory, backed up to DEVICES_JSON env var via Railway API
+let devices = {};
 
+// Load devices from environment variable on startup
 function loadDevices() {
   try {
-    if (fs.existsSync(DB_FILE)) return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-  } catch(e) {}
-  return {};
+    const raw = process.env.DEVICES_JSON;
+    if (raw) {
+      devices = JSON.parse(raw);
+      console.log(`Loaded ${Object.keys(devices).length} devices from environment`);
+    }
+  } catch(e) {
+    console.error('Failed to load devices:', e);
+    devices = {};
+  }
 }
 
-function saveDevices(devices) {
-  try { fs.writeFileSync(DB_FILE, JSON.stringify(devices, null, 2)); } catch(e) {}
+// Save devices to Railway environment variable via API
+async function saveDevices() {
+  if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_ENVIRONMENT_ID || !RAILWAY_SERVICE_ID) {
+    console.warn('Railway API credentials not set — devices will not persist across restarts');
+    return;
+  }
+
+  try {
+    const mutation = `
+      mutation UpsertVariables($input: VariableCollectionUpsertInput!) {
+        variableCollectionUpsert(input: $input)
+      }
+    `;
+
+    await fetch('https://backboard.railway.app/graphql/v2', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RAILWAY_API_TOKEN}`
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: {
+          input: {
+            projectId: RAILWAY_PROJECT_ID,
+            environmentId: RAILWAY_ENVIRONMENT_ID,
+            serviceId: RAILWAY_SERVICE_ID,
+            variables: {
+              DEVICES_JSON: JSON.stringify(devices)
+            }
+          }
+        }
+      })
+    });
+    console.log('Devices saved to Railway environment');
+  } catch(e) {
+    console.error('Failed to save devices to Railway:', e);
+  }
 }
 
-let devices = loadDevices();
-// devices = { [fingerprint]: { status: 'pending'|'approved'|'revoked', label: '', firstSeen: '', lastSeen: '' } }
+loadDevices();
 
 // ─── HELPERS ──────────────────────────────────────────────────
 function adminAuth(req, res, next) {
@@ -41,8 +84,7 @@ function adminAuth(req, res, next) {
 
 // ─── CLIENT ROUTES ────────────────────────────────────────────
 
-// Device registers itself — returns status
-app.post('/api/device/register', (req, res) => {
+app.post('/api/device/register', async (req, res) => {
   const { fingerprint, label } = req.body;
   if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
 
@@ -55,18 +97,17 @@ app.post('/api/device/register', (req, res) => {
       firstSeen: now,
       lastSeen: now
     };
-    saveDevices(devices);
+    await saveDevices();
     console.log(`New device registered: ${fingerprint} (${label})`);
   } else {
     devices[fingerprint].lastSeen = now;
     if (label) devices[fingerprint].label = label;
-    saveDevices(devices);
+    await saveDevices();
   }
 
   res.json({ status: devices[fingerprint].status });
 });
 
-// Device checks its status
 app.post('/api/device/status', (req, res) => {
   const { fingerprint } = req.body;
   if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
@@ -75,7 +116,6 @@ app.post('/api/device/status', (req, res) => {
   res.json({ status: device.status });
 });
 
-// AI proxy — only for approved devices
 app.post('/api/analyze', async (req, res) => {
   const { fingerprint, messages } = req.body;
 
@@ -116,58 +156,51 @@ app.post('/api/analyze', async (req, res) => {
 
 // ─── ADMIN ROUTES ─────────────────────────────────────────────
 
-// Admin login check
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
   if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Wrong password' });
-  res.json({ token: ADMIN_PASSWORD }); // token IS the password — simple but effective
+  res.json({ token: ADMIN_PASSWORD });
 });
 
-// Get all devices
 app.get('/api/admin/devices', adminAuth, (req, res) => {
   const list = Object.entries(devices).map(([fp, d]) => ({ fingerprint: fp, ...d }));
   list.sort((a, b) => new Date(b.firstSeen) - new Date(a.firstSeen));
   res.json(list);
 });
 
-// Approve a device
-app.post('/api/admin/approve', adminAuth, (req, res) => {
+app.post('/api/admin/approve', adminAuth, async (req, res) => {
   const { fingerprint } = req.body;
   if (!devices[fingerprint]) return res.status(404).json({ error: 'Device not found' });
   devices[fingerprint].status = 'approved';
-  saveDevices(devices);
+  await saveDevices();
   console.log(`Approved device: ${fingerprint}`);
   res.json({ ok: true });
 });
 
-// Revoke a device
-app.post('/api/admin/revoke', adminAuth, (req, res) => {
+app.post('/api/admin/revoke', adminAuth, async (req, res) => {
   const { fingerprint } = req.body;
   if (!devices[fingerprint]) return res.status(404).json({ error: 'Device not found' });
   devices[fingerprint].status = 'revoked';
-  saveDevices(devices);
+  await saveDevices();
   console.log(`Revoked device: ${fingerprint}`);
   res.json({ ok: true });
 });
 
-// Delete a device entirely
-app.post('/api/admin/delete', adminAuth, (req, res) => {
+app.post('/api/admin/delete', adminAuth, async (req, res) => {
   const { fingerprint } = req.body;
   delete devices[fingerprint];
-  saveDevices(devices);
+  await saveDevices();
   res.json({ ok: true });
 });
 
-// Update device label
-app.post('/api/admin/label', adminAuth, (req, res) => {
+app.post('/api/admin/label', adminAuth, async (req, res) => {
   const { fingerprint, label } = req.body;
   if (!devices[fingerprint]) return res.status(404).json({ error: 'Device not found' });
   devices[fingerprint].label = label;
-  saveDevices(devices);
+  await saveDevices();
   res.json({ ok: true });
 });
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', devices: Object.keys(devices).length });
 });
@@ -175,5 +208,6 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`BizLens server running on port ${PORT}`);
   console.log(`API key: ${ANTHROPIC_API_KEY ? '✓ loaded' : '✗ MISSING'}`);
-  console.log(`Admin password: ${ADMIN_PASSWORD !== 'changeme' ? '✓ set' : '⚠ using default — change this!'}`);
+  console.log(`Admin password: ${ADMIN_PASSWORD !== 'changeme' ? '✓ set' : '⚠ using default'}`);
+  console.log(`Railway persistence: ${RAILWAY_API_TOKEN ? '✓ enabled' : '⚠ disabled — devices will not persist'}`);
 });
