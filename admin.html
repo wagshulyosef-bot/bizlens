@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizLens Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F5F0; --surface: #FFFFFF; --surface2: #F0EDE6;
+    --border: #E2DDD4; --text: #1A1714; --muted: #7A7268;
+    --accent: #1A3A2A; --accent2: #C8A84B;
+    --green: #2D5A3D; --green-light: #E8F2EC;
+    --amber: #92610A; --amber-light: #FDF3DC;
+    --red: #8B2A2A; --red-light: #FDEAEA;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+  nav { background: var(--accent); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .nav-logo { font-family: monospace; font-size: 18px; color: #fff; }
+  .nav-logo span { color: var(--accent2); }
+  .nav-badge { font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.15); color: #fff; padding: 4px 10px; border-radius: 20px; }
+
+  /* LOGIN */
+  #loginPage { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 60px); }
+  .login-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; width: 360px; }
+  .login-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
+  input[type="password"] { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); background: var(--surface); outline: none; margin-bottom: 12px; transition: border-color 0.2s; }
+  input[type="password"]:focus { border-color: var(--accent); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; justify-content: center; }
+  .btn-primary:hover { background: #0F2418; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; font-weight: 600; }
+  .btn-approve { background: var(--green-light); color: var(--green); border: 1px solid #B8D4C0; }
+  .btn-approve:hover { background: #d0e8d8; }
+  .btn-revoke { background: var(--amber-light); color: var(--amber); border: 1px solid #E5C97A; }
+  .btn-revoke:hover { background: #f5e4b0; }
+  .btn-delete { background: var(--red-light); color: var(--red); border: 1px solid #E5AAAA; }
+  .btn-delete:hover { background: #f5c8c8; }
+  .btn-restore { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .error-msg { font-size: 13px; color: var(--red); margin-top: 8px; min-height: 20px; }
+
+  /* DASHBOARD */
+  #adminPage { display: none; }
+  .admin-body { max-width: 900px; margin: 0 auto; padding: 2rem; }
+  .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .admin-title { font-size: 22px; font-weight: 600; }
+  .refresh-btn { font-size: 13px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .refresh-btn:hover { background: var(--surface2); }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; }
+  .stat-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-value { font-size: 28px; font-weight: 300; font-family: 'DM Mono', monospace; color: var(--text); }
+  .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 10px; }
+  .device-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 2rem; }
+  .device-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 14px; }
+  .device-card.pending { border-left: 3px solid var(--accent2); }
+  .device-card.approved { border-left: 3px solid var(--green); }
+  .device-card.revoked { border-left: 3px solid var(--red); opacity: 0.7; }
+  .device-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-pending { background: var(--accent2); }
+  .dot-approved { background: var(--green); }
+  .dot-revoked { background: var(--red); }
+  .device-info { flex: 1; min-width: 0; }
+  .device-label { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .device-label input { border: none; background: none; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--text); outline: none; border-bottom: 1px dashed var(--border); width: 100%; }
+  .device-meta { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .device-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .status-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .badge-pending { background: var(--amber-light); color: var(--amber); }
+  .badge-approved { background: var(--green-light); color: var(--green); }
+  .badge-revoked { background: var(--red-light); color: var(--red); }
+  .empty-state { text-align: center; padding: 2rem; color: var(--muted); font-size: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  .loading { text-align: center; padding: 2rem; color: var(--muted); font-size: 14px; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: #fff; padding: 10px 18px; border-radius: var(--radius-sm); font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Biz<span>Lens</span> · Admin</div>
+  <div class="nav-badge">🔒 Private</div>
+</nav>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-box">
+    <div class="login-title">Admin login</div>
+    <div class="login-sub">Enter your admin password to manage device access.</div>
+    <input type="password" id="passwordInput" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()" />
+    <button class="btn btn-primary" onclick="login()">Sign in</button>
+    <div class="error-msg" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="adminPage">
+  <div class="admin-body">
+    <div class="admin-header">
+      <div class="admin-title">Device management</div>
+      <button class="refresh-btn" onclick="loadDevices()">↻ Refresh</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Pending approval</div>
+        <div class="stat-value" id="statPending">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Approved devices</div>
+        <div class="stat-value" id="statApproved">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Revoked devices</div>
+        <div class="stat-value" id="statRevoked">—</div>
+      </div>
+    </div>
+
+    <div class="section-label">Pending approval</div>
+    <div class="device-list" id="pendingList"><div class="loading"><div class="spinner"></div></div></div>
+
+    <div class="section-label">Approved</div>
+    <div class="device-list" id="approvedList"></div>
+
+    <div class="section-label">Revoked</div>
+    <div class="device-list" id="revokedList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SERVER = window.location.origin; // admin.html is served from same server
+let adminToken = null;
+
+async function login() {
+  const password = document.getElementById('passwordInput').value;
+  document.getElementById('loginError').textContent = '';
+  try {
+    const res = await fetch(`${SERVER}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    if (!res.ok) { document.getElementById('loginError').textContent = 'Wrong password.'; return; }
+    const data = await res.json();
+    adminToken = data.token;
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('adminPage').style.display = 'block';
+    loadDevices();
+    setInterval(loadDevices, 15000); // auto-refresh every 15s
+  } catch(e) {
+    document.getElementById('loginError').textContent = 'Could not connect to server.';
+  }
+}
+
+async function api(path, body) {
+  const res = await fetch(`${SERVER}${path}`, {
+    method: body ? 'POST' : 'GET',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  return res.json();
+}
+
+async function loadDevices() {
+  try {
+    const devices = await api('/api/admin/devices');
+    const pending = devices.filter(d => d.status === 'pending');
+    const approved = devices.filter(d => d.status === 'approved');
+    const revoked = devices.filter(d => d.status === 'revoked');
+
+    document.getElementById('statPending').textContent = pending.length;
+    document.getElementById('statApproved').textContent = approved.length;
+    document.getElementById('statRevoked').textContent = revoked.length;
+
+    renderList('pendingList', pending, 'pending');
+    renderList('approvedList', approved, 'approved');
+    renderList('revokedList', revoked, 'revoked');
+  } catch(e) {}
+}
+
+function renderList(containerId, devices, type) {
+  const el = document.getElementById(containerId);
+  if (!devices.length) {
+    el.innerHTML = `<div class="empty-state">No ${type} devices</div>`;
+    return;
+  }
+  el.innerHTML = devices.map(d => {
+    const shortId = d.fingerprint.slice(0,12) + '...';
+    const firstSeen = new Date(d.firstSeen).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const lastSeen = new Date(d.lastSeen).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    const actions = type === 'pending'
+      ? `<button class="btn btn-sm btn-approve" onclick="approve('${d.fingerprint}')">✓ Approve</button><button class="btn btn-sm btn-delete" onclick="deleteDevice('${d.fingerprint}')">Delete</button>`
+      : type === 'approved'
+      ? `<button class="btn btn-sm btn-revoke" onclick="revoke('${d.fingerprint}')">Revoke</button>`
+      : `<button class="btn btn-sm btn-restore" onclick="approve('${d.fingerprint}')">Restore</button><button class="btn btn-sm btn-delete" onclick="deleteDevice('${d.fingerprint}')">Delete</button>`;
+
+    return `<div class="device-card ${type}">
+      <div class="device-dot dot-${type}"></div>
+      <div class="device-info">
+        <div class="device-label">${escHtml(d.label)}</div>
+        <div class="device-meta">ID: ${shortId} · First seen: ${firstSeen} · Last seen: ${lastSeen}</div>
+      </div>
+      <span class="status-badge badge-${type}">${type}</span>
+      <div class="device-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
+async function approve(fp) {
+  await api('/api/admin/approve', { fingerprint: fp });
+  showToast('Device approved ✓');
+  loadDevices();
+}
+
+async function revoke(fp) {
+  await api('/api/admin/revoke', { fingerprint: fp });
+  showToast('Device revoked');
+  loadDevices();
+}
+
+async function deleteDevice(fp) {
+  if (!confirm('Delete this device record permanently?')) return;
+  await api('/api/admin/delete', { fingerprint: fp });
+  showToast('Device deleted');
+  loadDevices();
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
