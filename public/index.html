@@ -469,18 +469,33 @@ function showFieldError(id, msg) {
   const el = document.getElementById(id);
   el.style.borderColor = 'var(--red)';
   el.focus();
+  // Remove any existing error message
+  const existing = document.getElementById(id + '_error');
+  if (existing) existing.remove();
+  // Add error message below field
+  const err = document.createElement('div');
+  err.id = id + '_error';
+  err.style.cssText = 'color:var(--red);font-size:12px;margin-top:5px;';
+  err.textContent = msg;
+  el.parentElement.appendChild(err);
   // Remove error on input
-  el.addEventListener('input', () => el.style.borderColor = '', { once: true });
-  el.addEventListener('change', () => el.style.borderColor = '', { once: true });
+  el.addEventListener('input', () => {
+    el.style.borderColor = '';
+    err.remove();
+  }, { once: true });
+  el.addEventListener('change', () => {
+    el.style.borderColor = '';
+    err.remove();
+  }, { once: true });
 }
 
 function validateStep1() {
   const bizName = document.getElementById('bizName').value.trim();
   const industry = document.getElementById('industry').value;
   const bizDesc = document.getElementById('bizDesc').value.trim();
-  if (!bizName) { showFieldError('bizName', 'Please enter your business name'); return false; }
-  if (!industry) { showFieldError('industry', 'Please select your industry'); return false; }
-  if (!bizDesc) { showFieldError('bizDesc', 'Please describe your business'); return false; }
+  if (!bizName) { showFieldError('bizName', 'Please enter your business name to continue.'); return false; }
+  if (!industry) { showFieldError('industry', 'Please select your industry to continue.'); return false; }
+  if (!bizDesc) { showFieldError('bizDesc', 'Please describe your business to continue.'); return false; }
   return true;
 }
 
