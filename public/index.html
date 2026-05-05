@@ -410,13 +410,17 @@ function handleStatus(status) {
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
 
   if (status === 'approved') {
-    showPage(1);
+    // If we have saved data, go straight to dashboard
+    const saved = loadStateFromStorage();
+    if (saved && saved.bizName && saved.bizDesc) {
+      generateDashboard();
+    } else {
+      showPage(1);
+    }
   } else if (status === 'revoked') {
     document.getElementById('revokedPage').style.display = 'flex';
   } else {
-    // pending
     showWaitPage();
-    // Poll every 10 seconds
     statusInterval = setInterval(checkStatus, 10000);
   }
 }
@@ -461,8 +465,39 @@ function showPage(n) {
   window.scrollTo(0,0);
 }
 
+function showFieldError(id, msg) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'var(--red)';
+  el.focus();
+  // Remove error on input
+  el.addEventListener('input', () => el.style.borderColor = '', { once: true });
+  el.addEventListener('change', () => el.style.borderColor = '', { once: true });
+}
+
+function validateStep1() {
+  const bizName = document.getElementById('bizName').value.trim();
+  const industry = document.getElementById('industry').value;
+  const bizDesc = document.getElementById('bizDesc').value.trim();
+  if (!bizName) { showFieldError('bizName', 'Please enter your business name'); return false; }
+  if (!industry) { showFieldError('industry', 'Please select your industry'); return false; }
+  if (!bizDesc) { showFieldError('bizDesc', 'Please describe your business'); return false; }
+  return true;
+}
+
+function validateStep2() {
+  const products = [...document.querySelectorAll('.product-row')].filter(r => r.querySelector('.prod-name').value.trim());
+  if (!products.length) {
+    alert('Please add at least one product or service before continuing.');
+    return false;
+  }
+  return true;
+}
+
 function goToStep1() { showPage(1); }
-function goToStep2() { showPage(2); }
+function goToStep2() {
+  if (!validateStep1()) return;
+  showPage(2);
+}
 function toggleTag(el) { el.classList.toggle('selected'); }
 
 function init() {
@@ -588,6 +623,7 @@ function collectState() {
 
 // ─── DASHBOARD ────────────────────────────────────────────────
 function generateDashboard() {
+  if (!validateStep2()) return;
   collectState();
   showPage(3);
   document.getElementById('dashBizName').textContent = state.bizName;
