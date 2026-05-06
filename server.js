@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,204 +11,261 @@ const RAILWAY_API_TOKEN = process.env.RAILWAY_API_TOKEN;
 const RAILWAY_PROJECT_ID = process.env.RAILWAY_PROJECT_ID;
 const RAILWAY_ENVIRONMENT_ID = process.env.RAILWAY_ENVIRONMENT_ID;
 const RAILWAY_SERVICE_ID = process.env.RAILWAY_SERVICE_ID;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const SESSION_SECRET = process.env.SESSION_SECRET || 'clarity-default-secret';
+const BASE_URL = process.env.BASE_URL || 'https://bizlens-production.up.railway.app';
 
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 }
+}));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ─── IN-MEMORY DEVICE STORE ───────────────────────────────────
-// Primary store is in memory, backed up to DEVICES_JSON env var via Railway API
+// DEVICE STORE
 let devices = {};
+let googleTokens = {};
 
-// Load devices from environment variable on startup
 function loadDevices() {
   try {
     const raw = process.env.DEVICES_JSON;
-    if (raw) {
-      devices = JSON.parse(raw);
-      console.log(`Loaded ${Object.keys(devices).length} devices from environment`);
-    }
-  } catch(e) {
-    console.error('Failed to load devices:', e);
-    devices = {};
-  }
+    if (raw) { devices = JSON.parse(raw); console.log(`Loaded ${Object.keys(devices).length} devices`); }
+  } catch(e) { devices = {}; }
 }
 
-// Save devices to Railway environment variable via API
 async function saveDevices() {
-  if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_ENVIRONMENT_ID || !RAILWAY_SERVICE_ID) {
-    console.warn('Railway API credentials not set — devices will not persist across restarts');
-    return;
-  }
-
+  if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_ENVIRONMENT_ID || !RAILWAY_SERVICE_ID) return;
   try {
-    const mutation = `
-      mutation UpsertVariables($input: VariableCollectionUpsertInput!) {
-        variableCollectionUpsert(input: $input)
-      }
-    `;
-
     await fetch('https://backboard.railway.app/graphql/v2', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RAILWAY_API_TOKEN}`
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
       body: JSON.stringify({
-        query: mutation,
-        variables: {
-          input: {
-            projectId: RAILWAY_PROJECT_ID,
-            environmentId: RAILWAY_ENVIRONMENT_ID,
-            serviceId: RAILWAY_SERVICE_ID,
-            variables: {
-              DEVICES_JSON: JSON.stringify(devices)
-            }
-          }
-        }
+        query: `mutation UpsertVariables($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }`,
+        variables: { input: { projectId: RAILWAY_PROJECT_ID, environmentId: RAILWAY_ENVIRONMENT_ID, serviceId: RAILWAY_SERVICE_ID, variables: { DEVICES_JSON: JSON.stringify(devices) } } }
       })
     });
-    console.log('Devices saved to Railway environment');
-  } catch(e) {
-    console.error('Failed to save devices to Railway:', e);
-  }
+  } catch(e) { console.error('Failed to save devices:', e); }
 }
 
 loadDevices();
 
-// ─── HELPERS ──────────────────────────────────────────────────
 function adminAuth(req, res, next) {
-  const token = req.headers['x-admin-token'];
-  if (token !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
+  if (req.headers['x-admin-token'] !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
   next();
 }
 
-// ─── CLIENT ROUTES ────────────────────────────────────────────
+function deviceAuth(req, res, next) {
+  const { fingerprint } = req.body;
+  if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
+  const device = devices[fingerprint];
+  if (!device || device.status !== 'approved') return res.status(403).json({ error: 'Device not authorized' });
+  next();
+}
 
+// GOOGLE OAUTH
+const GOOGLE_SCOPES = [
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/userinfo.email'
+].join(' ');
+
+app.get('/auth/google', (req, res) => {
+  const { fingerprint } = req.query;
+  if (!fingerprint) return res.status(400).send('Missing fingerprint');
+  const state = Buffer.from(JSON.stringify({ fingerprint })).toString('base64');
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: `${BASE_URL}/auth/google/callback`,
+    response_type: 'code',
+    scope: GOOGLE_SCOPES,
+    access_type: 'offline',
+    prompt: 'consent',
+    state
+  });
+  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+});
+
+app.get('/auth/google/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  if (error) return res.send(`<script>window.opener.postMessage({type:'google_auth_error',error:'${error}'},'*');window.close();</script>`);
+  try {
+    const { fingerprint } = JSON.parse(Buffer.from(state, 'base64').toString());
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ code, client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET, redirect_uri: `${BASE_URL}/auth/google/callback`, grant_type: 'authorization_code' })
+    });
+    const tokens = await tokenRes.json();
+    if (tokens.error) throw new Error(tokens.error_description);
+    const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${tokens.access_token}` } });
+    const user = await userRes.json();
+    googleTokens[fingerprint] = { ...tokens, email: user.email, connectedAt: new Date().toISOString() };
+    res.send(`<script>window.opener.postMessage({type:'google_auth_success',email:'${user.email}'},'*');window.close();</script>`);
+  } catch(e) {
+    res.send(`<script>window.opener.postMessage({type:'google_auth_error',error:'${e.message}'},'*');window.close();</script>`);
+  }
+});
+
+app.post('/api/google/status', deviceAuth, (req, res) => {
+  const tokens = googleTokens[req.body.fingerprint];
+  res.json({ connected: !!tokens, email: tokens?.email || null });
+});
+
+async function getValidAccessToken(fingerprint) {
+  const tokens = googleTokens[fingerprint];
+  if (!tokens) throw new Error('Not connected to Google');
+  if (tokens.refresh_token) {
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET, refresh_token: tokens.refresh_token, grant_type: 'refresh_token' })
+    });
+    const refreshed = await res.json();
+    if (!refreshed.error) { googleTokens[fingerprint] = { ...tokens, ...refreshed }; return refreshed.access_token; }
+  }
+  return tokens.access_token;
+}
+
+// GMAIL
+app.post('/api/gmail/send', deviceAuth, async (req, res) => {
+  const { fingerprint, to, subject, body } = req.body;
+  try {
+    const accessToken = await getValidAccessToken(fingerprint);
+    const email = [`To: ${to}`, `Subject: ${subject}`, 'Content-Type: text/plain; charset=utf-8', '', body].join('\r\n');
+    const encoded = Buffer.from(email).toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw: encoded })
+    });
+    const data = await gmailRes.json();
+    if (!gmailRes.ok) throw new Error(data.error?.message || 'Gmail error');
+    res.json({ ok: true, messageId: data.id });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GOOGLE CALENDAR
+app.post('/api/calendar/create', deviceAuth, async (req, res) => {
+  const { fingerprint, title, description, start, end, attendees } = req.body;
+  try {
+    const accessToken = await getValidAccessToken(fingerprint);
+    const calRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ summary: title, description, start: { dateTime: start, timeZone: 'America/Los_Angeles' }, end: { dateTime: end, timeZone: 'America/Los_Angeles' }, attendees: attendees?.map(e => ({ email: e })) || [] })
+    });
+    const data = await calRes.json();
+    if (!calRes.ok) throw new Error(data.error?.message || 'Calendar error');
+    res.json({ ok: true, eventId: data.id, link: data.htmlLink });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// AI AGENT
+app.post('/api/agent', deviceAuth, async (req, res) => {
+  const { fingerprint, messages, businessContext } = req.body;
+  const tokens = googleTokens[fingerprint];
+  const systemPrompt = `You are an AI business assistant for Clarity AI Pro. You help business owners with invoicing, scheduling, and customer follow-up.
+
+BUSINESS CONTEXT:
+${businessContext || 'No business context provided.'}
+
+GOOGLE CONNECTION: ${tokens ? `Connected as ${tokens.email}` : 'Not connected to Google'}
+
+You can help draft emails, calendar events, and invoices. When drafting something, respond ONLY with this JSON format:
+{
+  "message": "conversational response explaining what you drafted",
+  "draft": {
+    "type": "email|calendar|invoice|none",
+    "email": { "to": "", "subject": "", "body": "" },
+    "calendar": { "title": "", "description": "", "start": "2026-05-10T10:00:00", "end": "2026-05-10T11:00:00", "attendees": [] },
+    "invoice": { "client": "", "items": [{"description": "", "amount": 0}], "total": 0, "dueDate": "" }
+  }
+}
+
+For regular conversation with no draft, use type "none". Be concise and specific to their business.`;
+
+  try {
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1500, system: systemPrompt, messages })
+    });
+    const data = await aiRes.json();
+    if (!aiRes.ok) throw new Error(data.error?.message || 'AI error');
+    const text = data.content.map(b => b.text || '').join('');
+    try { res.json(JSON.parse(text.replace(/```json|```/g,'').trim())); }
+    catch { res.json({ message: text, draft: { type: 'none' } }); }
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// DEVICE ROUTES
 app.post('/api/device/register', async (req, res) => {
   const { fingerprint, label } = req.body;
   if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
-
   const now = new Date().toISOString();
-
-  if (!devices[fingerprint]) {
-    devices[fingerprint] = {
-      status: 'pending',
-      label: label || 'Unknown device',
-      firstSeen: now,
-      lastSeen: now
-    };
-    await saveDevices();
-    console.log(`New device registered: ${fingerprint} (${label})`);
-  } else {
-    devices[fingerprint].lastSeen = now;
-    if (label) devices[fingerprint].label = label;
-    await saveDevices();
-  }
-
+  if (!devices[fingerprint]) { devices[fingerprint] = { status: 'pending', label: label || 'Unknown device', firstSeen: now, lastSeen: now }; await saveDevices(); }
+  else { devices[fingerprint].lastSeen = now; if (label) devices[fingerprint].label = label; await saveDevices(); }
   res.json({ status: devices[fingerprint].status });
 });
 
 app.post('/api/device/status', (req, res) => {
   const { fingerprint } = req.body;
   if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
-  const device = devices[fingerprint];
-  if (!device) return res.json({ status: 'pending' });
-  res.json({ status: device.status });
+  res.json({ status: devices[fingerprint]?.status || 'pending' });
 });
 
 app.post('/api/analyze', async (req, res) => {
   const { fingerprint, messages } = req.body;
-
   if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
-
-  const device = devices[fingerprint];
-  if (!device || device.status !== 'approved') {
-    return res.status(403).json({ error: 'Device not authorized' });
-  }
-
-  if (!ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'Server API key not configured' });
-  }
-
+  if (!devices[fingerprint] || devices[fingerprint].status !== 'approved') return res.status(403).json({ error: 'Device not authorized' });
+  if (!ANTHROPIC_API_KEY) return res.status(500).json({ error: 'Server API key not configured' });
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 1000,
-        messages
-      })
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1000, messages })
     });
-
     const data = await response.json();
     if (!response.ok) return res.status(response.status).json({ error: data.error?.message || 'API error' });
     res.json(data);
-  } catch (err) {
-    console.error('AI error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
+  } catch(err) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// ─── ADMIN ROUTES ─────────────────────────────────────────────
-
+// ADMIN ROUTES
 app.post('/api/admin/login', (req, res) => {
-  const { password } = req.body;
-  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Wrong password' });
+  if (req.body.password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Wrong password' });
   res.json({ token: ADMIN_PASSWORD });
 });
-
 app.get('/api/admin/devices', adminAuth, (req, res) => {
-  const list = Object.entries(devices).map(([fp, d]) => ({ fingerprint: fp, ...d }));
-  list.sort((a, b) => new Date(b.firstSeen) - new Date(a.firstSeen));
-  res.json(list);
+  res.json(Object.entries(devices).map(([fp, d]) => ({ fingerprint: fp, ...d })).sort((a,b) => new Date(b.firstSeen)-new Date(a.firstSeen)));
 });
-
 app.post('/api/admin/approve', adminAuth, async (req, res) => {
-  const { fingerprint } = req.body;
-  if (!devices[fingerprint]) return res.status(404).json({ error: 'Device not found' });
-  devices[fingerprint].status = 'approved';
-  await saveDevices();
-  console.log(`Approved device: ${fingerprint}`);
-  res.json({ ok: true });
+  if (!devices[req.body.fingerprint]) return res.status(404).json({ error: 'Not found' });
+  devices[req.body.fingerprint].status = 'approved'; await saveDevices(); res.json({ ok: true });
 });
-
 app.post('/api/admin/revoke', adminAuth, async (req, res) => {
-  const { fingerprint } = req.body;
-  if (!devices[fingerprint]) return res.status(404).json({ error: 'Device not found' });
-  devices[fingerprint].status = 'revoked';
-  await saveDevices();
-  console.log(`Revoked device: ${fingerprint}`);
-  res.json({ ok: true });
+  if (!devices[req.body.fingerprint]) return res.status(404).json({ error: 'Not found' });
+  devices[req.body.fingerprint].status = 'revoked'; await saveDevices(); res.json({ ok: true });
 });
-
 app.post('/api/admin/delete', adminAuth, async (req, res) => {
-  const { fingerprint } = req.body;
-  delete devices[fingerprint];
-  await saveDevices();
-  res.json({ ok: true });
+  delete devices[req.body.fingerprint]; await saveDevices(); res.json({ ok: true });
 });
-
 app.post('/api/admin/label', adminAuth, async (req, res) => {
-  const { fingerprint, label } = req.body;
-  if (!devices[fingerprint]) return res.status(404).json({ error: 'Device not found' });
-  devices[fingerprint].label = label;
-  await saveDevices();
-  res.json({ ok: true });
+  if (!devices[req.body.fingerprint]) return res.status(404).json({ error: 'Not found' });
+  devices[req.body.fingerprint].label = req.body.label; await saveDevices(); res.json({ ok: true });
 });
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', devices: Object.keys(devices).length });
-});
+app.get('/health', (req, res) => res.json({ status: 'ok', devices: Object.keys(devices).length }));
 
 app.listen(PORT, () => {
-  console.log(`BizLens server running on port ${PORT}`);
+  console.log(`Clarity AI Pro server running on port ${PORT}`);
   console.log(`API key: ${ANTHROPIC_API_KEY ? '✓ loaded' : '✗ MISSING'}`);
   console.log(`Admin password: ${ADMIN_PASSWORD !== 'changeme' ? '✓ set' : '⚠ using default'}`);
-  console.log(`Railway persistence: ${RAILWAY_API_TOKEN ? '✓ enabled' : '⚠ disabled — devices will not persist'}`);
+  console.log(`Google OAuth: ${GOOGLE_CLIENT_ID ? '✓ configured' : '⚠ not configured'}`);
+  console.log(`Railway persistence: ${RAILWAY_API_TOKEN ? '✓ enabled' : '⚠ disabled'}`);
 });
