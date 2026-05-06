@@ -28,6 +28,53 @@
   .nav-step { font-size: 12px; color: rgba(255,255,255,0.45); padding: 5px 12px; border-radius: 20px; font-weight: 500; transition: all 0.2s; }
   .nav-step.active { color: #fff; background: rgba(255,255,255,0.15); }
   .nav-step.done { color: var(--accent2); }
+  .nav-agent-btn { font-size: 12px; color: rgba(255,255,255,0.7); padding: 5px 14px; border-radius: 20px; font-weight: 500; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.2s; margin-left: 12px; }
+  .nav-agent-btn:hover, .nav-agent-btn.active { color: #fff; background: var(--accent2); border-color: var(--accent2); color: #1A1714; }
+
+  /* AGENT PAGE */
+  #agentPage { display: none; min-height: calc(100vh - 60px); background: var(--bg); }
+  .agent-layout { display: grid; grid-template-columns: 300px 1fr; height: calc(100vh - 60px); }
+  .agent-sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
+  .agent-sidebar-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+  .google-connect-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
+  .google-connect-status { font-size: 13px; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+  .status-dot.connected { background: var(--green); }
+  .connect-btn { display: block; width: 100%; padding: 9px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .connect-btn:hover { background: var(--surface2); }
+  .quick-action { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; color: var(--text); cursor: pointer; text-align: left; font-family: 'DM Sans', sans-serif; transition: all 0.15s; width: 100%; }
+  .quick-action:hover { background: var(--green-light); border-color: #B8D4C0; }
+  .quick-action-icon { margin-right: 6px; }
+  .agent-main { display: flex; flex-direction: column; height: calc(100vh - 60px); }
+  .agent-messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 14px; }
+  .agent-msg { max-width: 75%; }
+  .agent-msg.user { align-self: flex-end; }
+  .agent-msg.ai { align-self: flex-start; }
+  .agent-msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+  .agent-msg.user .agent-msg-bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .agent-msg.ai .agent-msg-bubble { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+  .draft-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-top: 8px; }
+  .draft-card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .draft-field { margin-bottom: 10px; }
+  .draft-field label { font-size: 11px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px; }
+  .draft-field input, .draft-field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--surface2); outline: none; }
+  .draft-field textarea { resize: vertical; min-height: 80px; }
+  .draft-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .draft-send-btn { padding: 8px 18px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .draft-send-btn:hover { background: #0F2418; }
+  .draft-discard-btn { padding: 8px 14px; background: none; color: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+  .agent-input-area { padding: 1rem 1.5rem; border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 10px; align-items: flex-end; }
+  .agent-input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: var(--bg); outline: none; resize: none; min-height: 44px; max-height: 120px; transition: border-color 0.2s; }
+  .agent-input:focus { border-color: var(--accent); }
+  .agent-send-btn { padding: 10px 18px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; height: 44px; flex-shrink: 0; }
+  .agent-send-btn:hover { background: #0F2418; }
+  .agent-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .invoice-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+  .invoice-table th { text-align: left; padding: 4px 8px; font-size: 11px; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .invoice-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .invoice-total { font-weight: 600; font-size: 15px; margin-top: 8px; text-align: right; }
+  .success-msg { font-size: 12px; color: var(--green); background: var(--green-light); padding: 6px 10px; border-radius: var(--radius-sm); margin-top: 6px; }
+  .error-msg-agent { font-size: 12px; color: var(--red); background: var(--red-light); padding: 6px 10px; border-radius: var(--radius-sm); margin-top: 6px; }
 
   /* PAGES */
   .page { display: none; min-height: calc(100vh - 60px); }
@@ -150,10 +197,13 @@
 
 <nav>
   <div class="nav-logo">Clarity<span> AI Pro</span></div>
-  <div class="nav-steps">
-    <div class="nav-step" id="navStep1">1 · About</div>
-    <div class="nav-step" id="navStep2">2 · Data</div>
-    <div class="nav-step" id="navStep3">3 · Dashboard</div>
+  <div style="display:flex;align-items:center;">
+    <div class="nav-steps">
+      <div class="nav-step" id="navStep1">1 · About</div>
+      <div class="nav-step" id="navStep2">2 · Data</div>
+      <div class="nav-step" id="navStep3">3 · Dashboard</div>
+    </div>
+    <button class="nav-agent-btn" id="navAgentBtn" onclick="toggleAgent()" style="display:none;">🤖 AI Agent</button>
   </div>
 </nav>
 
@@ -286,8 +336,7 @@
 </div>
 
 <!-- PAGE 3: DASHBOARD -->
-<div class="page" id="page3">
-  <div class="dash-header">
+<div class="page" id="page3">  <div class="dash-header">
     <div class="dash-header-inner">
       <div>
         <div class="dash-biz-name" id="dashBizName">Dashboard</div>
@@ -330,6 +379,51 @@
       <div class="dash-card">
         <div class="dash-card-title">Smart insights <span class="ai-pill">AI</span></div>
         <div id="insightsList"><div class="ai-loading"><div class="spinner"></div> Generating...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI AGENT PAGE -->
+<div id="agentPage">
+  <div class="agent-layout">
+    <!-- SIDEBAR -->
+    <div class="agent-sidebar">
+      <div>
+        <div class="agent-sidebar-title">Google Account</div>
+        <div class="google-connect-box">
+          <div class="google-connect-status">
+            <div class="status-dot" id="googleDot"></div>
+            <span id="googleStatusText">Not connected</span>
+          </div>
+          <button class="connect-btn" id="googleConnectBtn" onclick="connectGoogle()">Connect Google Account</button>
+        </div>
+      </div>
+      <div>
+        <div class="agent-sidebar-title">Quick actions</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button class="quick-action" onclick="quickAction('Draft a follow-up email to a client who hasn\'t paid their invoice yet')"><span class="quick-action-icon">✉️</span> Invoice follow-up email</button>
+          <button class="quick-action" onclick="quickAction('Schedule a check-in call with a client for next week')"><span class="quick-action-icon">📅</span> Schedule client call</button>
+          <button class="quick-action" onclick="quickAction('Draft a thank you email to a client after completing a project')"><span class="quick-action-icon">🙏</span> Thank you email</button>
+          <button class="quick-action" onclick="quickAction('Create an invoice for a client')"><span class="quick-action-icon">🧾</span> Create invoice</button>
+          <button class="quick-action" onclick="quickAction('Draft an email to introduce my business to a potential new client')"><span class="quick-action-icon">🤝</span> New client intro</button>
+        </div>
+      </div>
+      <div style="margin-top:auto;">
+        <button onclick="toggleAgent()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;padding:4px 0;">← Back to dashboard</button>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="agent-main">
+      <div class="agent-messages" id="agentMessages">
+        <div class="agent-msg ai">
+          <div class="agent-msg-bubble">Hi! I'm your AI business assistant. I can help you draft emails, schedule meetings, and create invoices — all tailored to your business. Connect your Google account on the left to send emails and create calendar events directly. What can I help you with today?</div>
+        </div>
+      </div>
+      <div class="agent-input-area">
+        <textarea class="agent-input" id="agentInput" placeholder="Ask me anything — draft an email, schedule a meeting, create an invoice..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAgentMessage();}"></textarea>
+        <button class="agent-send-btn" id="agentSendBtn" onclick="sendAgentMessage()">Send</button>
       </div>
     </div>
   </div>
@@ -641,6 +735,7 @@ function generateDashboard() {
   if (!validateStep2()) return;
   collectState();
   showPage(3);
+  document.getElementById('navAgentBtn').style.display = 'inline-block';
   document.getElementById('dashBizName').textContent = state.bizName;
   document.getElementById('dashBizMeta').textContent = [state.industry, state.bizDesc.slice(0,80) + (state.bizDesc.length > 80 ? '...' : '')].filter(Boolean).join(' · ');
   buildMetrics();
@@ -775,6 +870,220 @@ function renderAI(result) {
 }
 
 function refreshAI() { runAI(); }
+
+// ─── AI AGENT ─────────────────────────────────────────────────
+let agentVisible = false;
+let agentChatHistory = [];
+let googleConnected = false;
+
+function toggleAgent() {
+  agentVisible = !agentVisible;
+  document.getElementById('agentPage').style.display = agentVisible ? 'block' : 'none';
+  document.getElementById('page3').style.display = agentVisible ? 'none' : 'block';
+  document.getElementById('navAgentBtn').classList.toggle('active', agentVisible);
+  if (agentVisible) checkGoogleStatus();
+}
+
+async function checkGoogleStatus() {
+  try {
+    const res = await fetch(`${SERVER}/api/google/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fingerprint })
+    });
+    const data = await res.json();
+    googleConnected = data.connected;
+    document.getElementById('googleDot').className = 'status-dot' + (data.connected ? ' connected' : '');
+    document.getElementById('googleStatusText').textContent = data.connected ? `Connected: ${data.email}` : 'Not connected';
+    document.getElementById('googleConnectBtn').textContent = data.connected ? 'Reconnect Google' : 'Connect Google Account';
+  } catch(e) {}
+}
+
+function connectGoogle() {
+  const url = `${SERVER}/auth/google?fingerprint=${fingerprint}`;
+  const popup = window.open(url, 'google_auth', 'width=500,height=600,left=200,top=100');
+  window.addEventListener('message', async (e) => {
+    if (e.data?.type === 'google_auth_success') {
+      googleConnected = true;
+      await checkGoogleStatus();
+      addAgentMessage('ai', '✅ Google account connected! I can now send emails and create calendar events for you.');
+    } else if (e.data?.type === 'google_auth_error') {
+      addAgentMessage('ai', `❌ Could not connect Google: ${e.data.error}`);
+    }
+  }, { once: true });
+}
+
+function quickAction(prompt) {
+  document.getElementById('agentInput').value = prompt;
+  sendAgentMessage();
+}
+
+function addAgentMessage(role, text, draft) {
+  const messages = document.getElementById('agentMessages');
+  const msg = document.createElement('div');
+  msg.className = `agent-msg ${role}`;
+
+  let html = `<div class="agent-msg-bubble">${text.replace(/\n/g,'<br>')}</div>`;
+
+  if (draft && draft.type !== 'none') {
+    if (draft.type === 'email' && draft.email) {
+      html += `<div class="draft-card">
+        <div class="draft-card-title">✉️ Email draft</div>
+        <div class="draft-field"><label>To</label><input type="text" id="draftTo" value="${draft.email.to || ''}" /></div>
+        <div class="draft-field"><label>Subject</label><input type="text" id="draftSubject" value="${draft.email.subject || ''}" /></div>
+        <div class="draft-field"><label>Message</label><textarea id="draftBody">${draft.email.body || ''}</textarea></div>
+        <div class="draft-actions">
+          <button class="draft-send-btn" onclick="sendEmail()">Send via Gmail</button>
+          <button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button>
+        </div>
+        <div id="emailResult"></div>
+      </div>`;
+    } else if (draft.type === 'calendar' && draft.calendar) {
+      html += `<div class="draft-card">
+        <div class="draft-card-title">📅 Calendar event</div>
+        <div class="draft-field"><label>Title</label><input type="text" id="draftTitle" value="${draft.calendar.title || ''}" /></div>
+        <div class="draft-field"><label>Description</label><textarea id="draftDesc">${draft.calendar.description || ''}</textarea></div>
+        <div class="form-row" style="gap:8px;margin-bottom:10px;">
+          <div class="draft-field" style="margin:0;"><label>Start</label><input type="datetime-local" id="draftStart" value="${draft.calendar.start?.slice(0,16) || ''}" /></div>
+          <div class="draft-field" style="margin:0;"><label>End</label><input type="datetime-local" id="draftEnd" value="${draft.calendar.end?.slice(0,16) || ''}" /></div>
+        </div>
+        <div class="draft-field"><label>Attendees <span style="font-weight:400;">(comma separated emails)</span></label><input type="text" id="draftAttendees" value="${(draft.calendar.attendees||[]).join(', ')}" /></div>
+        <div class="draft-actions">
+          <button class="draft-send-btn" onclick="createCalendarEvent()">Add to Google Calendar</button>
+          <button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button>
+        </div>
+        <div id="calResult"></div>
+      </div>`;
+    } else if (draft.type === 'invoice' && draft.invoice) {
+      const items = draft.invoice.items || [];
+      html += `<div class="draft-card">
+        <div class="draft-card-title">🧾 Invoice</div>
+        <div class="draft-field"><label>Client</label><input type="text" id="draftClient" value="${draft.invoice.client || ''}" /></div>
+        <table class="invoice-table">
+          <thead><tr><th>Description</th><th>Amount</th></tr></thead>
+          <tbody>${items.map(i => `<tr><td>${i.description}</td><td>$${i.amount}</td></tr>`).join('')}</tbody>
+        </table>
+        <div class="invoice-total">Total: $${draft.invoice.total || 0}</div>
+        <div class="draft-field" style="margin-top:10px;"><label>Due date</label><input type="date" id="draftDue" value="${draft.invoice.dueDate || ''}" /></div>
+        <div class="draft-actions">
+          <button class="draft-send-btn" onclick="sendInvoiceEmail()">Send as Email</button>
+          <button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button>
+        </div>
+        <div id="invoiceResult"></div>
+      </div>`;
+    }
+  }
+
+  msg.innerHTML = html;
+  messages.appendChild(msg);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+async function sendAgentMessage() {
+  const input = document.getElementById('agentInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  addAgentMessage('user', text);
+
+  agentChatHistory.push({ role: 'user', content: text });
+
+  const btn = document.getElementById('agentSendBtn');
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  // Show typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'agent-msg ai';
+  typing.id = 'typingIndicator';
+  typing.innerHTML = '<div class="agent-msg-bubble"><div class="spinner" style="width:14px;height:14px;border-width:2px;"></div></div>';
+  document.getElementById('agentMessages').appendChild(typing);
+  document.getElementById('agentMessages').scrollTop = 99999;
+
+  try {
+    const businessContext = `Name: ${state.bizName}, Industry: ${state.industry}, Description: ${state.bizDesc}, Products: ${state.products.map(p=>p.name).join(', ')}`;
+    const res = await fetch(`${SERVER}/api/agent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fingerprint, messages: agentChatHistory, businessContext })
+    });
+    const data = await res.json();
+    typing.remove();
+
+    if (data.error) {
+      addAgentMessage('ai', `Sorry, something went wrong: ${data.error}`);
+    } else {
+      agentChatHistory.push({ role: 'assistant', content: data.message });
+      addAgentMessage('ai', data.message, data.draft);
+    }
+  } catch(e) {
+    typing.remove();
+    addAgentMessage('ai', 'Sorry, I could not connect to the server. Please try again.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Send';
+}
+
+async function sendEmail() {
+  if (!googleConnected) { alert('Please connect your Google account first.'); return; }
+  const to = document.getElementById('draftTo').value;
+  const subject = document.getElementById('draftSubject').value;
+  const body = document.getElementById('draftBody').value;
+  const result = document.getElementById('emailResult');
+  result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Sending...</div>';
+  try {
+    const res = await fetch(`${SERVER}/api/gmail/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fingerprint, to, subject, body })
+    });
+    const data = await res.json();
+    if (data.ok) result.innerHTML = '<div class="success-msg">✓ Email sent successfully!</div>';
+    else result.innerHTML = `<div class="error-msg-agent">Error: ${data.error}</div>`;
+  } catch(e) { result.innerHTML = '<div class="error-msg-agent">Failed to send email.</div>'; }
+}
+
+async function createCalendarEvent() {
+  if (!googleConnected) { alert('Please connect your Google account first.'); return; }
+  const title = document.getElementById('draftTitle').value;
+  const description = document.getElementById('draftDesc').value;
+  const start = document.getElementById('draftStart').value;
+  const end = document.getElementById('draftEnd').value;
+  const attendees = document.getElementById('draftAttendees').value.split(',').map(e=>e.trim()).filter(Boolean);
+  const result = document.getElementById('calResult');
+  result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Creating event...</div>';
+  try {
+    const res = await fetch(`${SERVER}/api/calendar/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fingerprint, title, description, start: new Date(start).toISOString(), end: new Date(end).toISOString(), attendees })
+    });
+    const data = await res.json();
+    if (data.ok) result.innerHTML = `<div class="success-msg">✓ Event created! <a href="${data.link}" target="_blank" style="color:var(--green);">View in Calendar</a></div>`;
+    else result.innerHTML = `<div class="error-msg-agent">Error: ${data.error}</div>`;
+  } catch(e) { result.innerHTML = '<div class="error-msg-agent">Failed to create event.</div>'; }
+}
+
+async function sendInvoiceEmail() {
+  if (!googleConnected) { alert('Please connect your Google account first.'); return; }
+  const client = document.getElementById('draftClient').value;
+  const due = document.getElementById('draftDue').value;
+  const result = document.getElementById('invoiceResult');
+  result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Sending...</div>';
+  const body = `Dear ${client},\n\nPlease find your invoice attached below.\n\nDue date: ${due}\n\nThank you for your business!\n\n${state.bizName}`;
+  try {
+    const res = await fetch(`${SERVER}/api/gmail/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fingerprint, to: client, subject: `Invoice from ${state.bizName}`, body })
+    });
+    const data = await res.json();
+    if (data.ok) result.innerHTML = '<div class="success-msg">✓ Invoice sent!</div>';
+    else result.innerHTML = `<div class="error-msg-agent">Error: ${data.error}</div>`;
+  } catch(e) { result.innerHTML = '<div class="error-msg-agent">Failed to send invoice.</div>'; }
+}
 
 init();
 </script>
