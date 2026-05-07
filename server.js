@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +18,12 @@ const BASE_URL = process.env.BASE_URL || 'https://bizlens-production.up.railway.
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 }
+}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // DEVICE STORE
@@ -147,10 +154,33 @@ app.post('/api/calendar/create', deviceAuth, async (req, res) => {
   const { fingerprint, title, description, start, end, attendees } = req.body;
   try {
     const accessToken = await getValidAccessToken(fingerprint);
+
+    // Ensure datetime strings are in correct format for Pacific time
+    // If the datetime doesn't have timezone info, treat it as Pacific time
+    function toCalendarDateTime(dt) {
+      if (!dt) return new Date().toISOString();
+      // If already has timezone offset, use as-is
+      if (dt.includes('+') || dt.includes('Z') || (dt.includes('-') && dt.lastIndexOf('-') > 7)) {
+        return new Date(dt).toISOString();
+      }
+      // Otherwise treat as Pacific local time by appending offset
+      // Pacific is UTC-7 (PDT) or UTC-8 (PST) — use -07:00 as default
+      return new Date(dt + '-07:00').toISOString();
+    }
+
+    const startDT = toCalendarDateTime(start);
+    const endDT = toCalendarDateTime(end);
+
     const calRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ summary: title, description, start: { dateTime: start, timeZone: 'America/Los_Angeles' }, end: { dateTime: end, timeZone: 'America/Los_Angeles' }, attendees: attendees?.map(e => ({ email: e })) || [] })
+      body: JSON.stringify({
+        summary: title,
+        description,
+        start: { dateTime: startDT, timeZone: 'America/Los_Angeles' },
+        end: { dateTime: endDT, timeZone: 'America/Los_Angeles' },
+        attendees: attendees?.map(e => ({ email: e })) || []
+      })
     });
     const data = await calRes.json();
     if (!calRes.ok) throw new Error(data.error?.message || 'Calendar error');
@@ -162,6 +192,7 @@ app.post('/api/calendar/create', deviceAuth, async (req, res) => {
 app.post('/api/agent', deviceAuth, async (req, res) => {
   const { fingerprint, messages, businessContext } = req.body;
   const tokens = googleTokens[fingerprint];
+  const today = new Date().toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const systemPrompt = `You are an AI business assistant for Clarity AI Pro. You help business owners with invoicing, scheduling, and customer follow-up.
 
 BUSINESS CONTEXT:
@@ -169,13 +200,15 @@ ${businessContext || 'No business context provided.'}
 
 GOOGLE CONNECTION: ${tokens ? `Connected as ${tokens.email}` : 'Not connected to Google'}
 
+TODAY IS: ${today} (Pacific Time)
+
 You can help draft emails, calendar events, and invoices. When drafting something, respond ONLY with this JSON format:
 {
   "message": "conversational response explaining what you drafted",
   "draft": {
     "type": "email|calendar|invoice|none",
     "email": { "to": "", "subject": "", "body": "" },
-    "calendar": { "title": "", "description": "", "start": "2026-05-10T10:00:00", "end": "2026-05-10T11:00:00", "attendees": [] },
+    "calendar": { "title": "", "description": "", "start": "2026-05-10T16:30:00", "end": "2026-05-10T17:30:00", "attendees": [] },
     "invoice": { "client": "", "items": [{"description": "", "amount": 0}], "total": 0, "dueDate": "" }
   }
 }
