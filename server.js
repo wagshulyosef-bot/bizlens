@@ -184,7 +184,6 @@ app.post('/api/calendar/create', deviceAuth, async (req, res) => {
     });
     const data = await calRes.json();
     if (!calRes.ok) throw new Error(data.error?.message || 'Calendar error');
-    console.log('Calendar event created:', JSON.stringify(data));
     res.json({ ok: true, eventId: data.id, link: data.htmlLink });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -193,7 +192,9 @@ app.post('/api/calendar/create', deviceAuth, async (req, res) => {
 app.post('/api/agent', deviceAuth, async (req, res) => {
   const { fingerprint, messages, businessContext } = req.body;
   const tokens = googleTokens[fingerprint];
-  const today = new Date().toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+  const today = now.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const todayISO = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const systemPrompt = `You are an AI business assistant for Clarity AI Pro. You help business owners with invoicing, scheduling, and customer follow-up.
 
 BUSINESS CONTEXT:
@@ -201,7 +202,7 @@ ${businessContext || 'No business context provided.'}
 
 GOOGLE CONNECTION: ${tokens ? `Connected as ${tokens.email}` : 'Not connected to Google'}
 
-TODAY IS: ${today} (Pacific Time)
+TODAY IS: ${today} (${todayISO}) Pacific Time. Use this to calculate exact dates when the user says things like "next Friday" or "Thursday". Always use the correct YYYY-MM-DD date in your response.
 
 You can help draft emails, calendar events, and invoices. When drafting something, respond ONLY with this JSON format:
 {
