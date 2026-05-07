@@ -184,6 +184,7 @@ app.post('/api/calendar/create', deviceAuth, async (req, res) => {
     });
     const data = await calRes.json();
     if (!calRes.ok) throw new Error(data.error?.message || 'Calendar error');
+    console.log('Calendar event created:', JSON.stringify(data));
     res.json({ ok: true, eventId: data.id, link: data.htmlLink });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
