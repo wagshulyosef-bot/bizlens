@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,22 +12,16 @@ const RAILWAY_ENVIRONMENT_ID = process.env.RAILWAY_ENVIRONMENT_ID;
 const RAILWAY_SERVICE_ID = process.env.RAILWAY_SERVICE_ID;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const SESSION_SECRET = process.env.SESSION_SECRET || 'clarity-default-secret';
 const BASE_URL = process.env.BASE_URL || 'https://bizlens-production.up.railway.app';
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use(session({
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 }
-}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // DEVICE STORE
 let devices = {};
 let googleTokens = {};
+let saveTimer = null;
 
 function loadDevices() {
   try {
@@ -37,18 +30,23 @@ function loadDevices() {
   } catch(e) { devices = {}; }
 }
 
-async function saveDevices() {
-  if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_ENVIRONMENT_ID || !RAILWAY_SERVICE_ID) return;
-  try {
-    await fetch('https://backboard.railway.app/graphql/v2', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
-      body: JSON.stringify({
-        query: `mutation UpsertVariables($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }`,
-        variables: { input: { projectId: RAILWAY_PROJECT_ID, environmentId: RAILWAY_ENVIRONMENT_ID, serviceId: RAILWAY_SERVICE_ID, variables: { DEVICES_JSON: JSON.stringify(devices) } } }
-      })
-    });
-  } catch(e) { console.error('Failed to save devices:', e); }
+// Save devices in background — debounced so rapid changes batch together
+function saveDevices() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_ENVIRONMENT_ID || !RAILWAY_SERVICE_ID) return;
+    try {
+      await fetch('https://backboard.railway.app/graphql/v2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
+        body: JSON.stringify({
+          query: `mutation UpsertVariables($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }`,
+          variables: { input: { projectId: RAILWAY_PROJECT_ID, environmentId: RAILWAY_ENVIRONMENT_ID, serviceId: RAILWAY_SERVICE_ID, variables: { DEVICES_JSON: JSON.stringify(devices) } } }
+        })
+      });
+      console.log('Devices saved to Railway');
+    } catch(e) { console.error('Failed to save devices:', e); }
+  }, 500); // wait 500ms before saving to batch rapid changes
 }
 
 loadDevices();
@@ -238,12 +236,12 @@ app.post('/api/device/register', async (req, res) => {
   const now = new Date().toISOString();
   if (!devices[fingerprint]) {
     devices[fingerprint] = { status: 'pending', label: label || 'Unknown device', timeWasters: timeWasters || '', firstSeen: now, lastSeen: now };
-    await saveDevices();
+    saveDevices();
   } else {
     devices[fingerprint].lastSeen = now;
     if (label) devices[fingerprint].label = label;
     if (timeWasters) devices[fingerprint].timeWasters = timeWasters;
-    await saveDevices();
+    saveDevices();
   }
   res.json({ status: devices[fingerprint].status });
 });
@@ -283,18 +281,18 @@ app.get('/api/admin/devices', adminAuth, (req, res) => {
 });
 app.post('/api/admin/approve', adminAuth, async (req, res) => {
   if (!devices[req.body.fingerprint]) return res.status(404).json({ error: 'Not found' });
-  devices[req.body.fingerprint].status = 'approved'; await saveDevices(); res.json({ ok: true });
+  devices[req.body.fingerprint].status = 'approved'; saveDevices(); res.json({ ok: true });
 });
 app.post('/api/admin/revoke', adminAuth, async (req, res) => {
   if (!devices[req.body.fingerprint]) return res.status(404).json({ error: 'Not found' });
-  devices[req.body.fingerprint].status = 'revoked'; await saveDevices(); res.json({ ok: true });
+  devices[req.body.fingerprint].status = 'revoked'; saveDevices(); res.json({ ok: true });
 });
 app.post('/api/admin/delete', adminAuth, async (req, res) => {
-  delete devices[req.body.fingerprint]; await saveDevices(); res.json({ ok: true });
+  delete devices[req.body.fingerprint]; saveDevices(); res.json({ ok: true });
 });
 app.post('/api/admin/label', adminAuth, async (req, res) => {
   if (!devices[req.body.fingerprint]) return res.status(404).json({ error: 'Not found' });
-  devices[req.body.fingerprint].label = req.body.label; await saveDevices(); res.json({ ok: true });
+  devices[req.body.fingerprint].label = req.body.label; saveDevices(); res.json({ ok: true });
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok', devices: Object.keys(devices).length }));
