@@ -37,14 +37,64 @@ function loadGoogleTokens() {
   } catch(e) { googleTokens = {}; }
 }
 
+// Allowlist of GraphQL operation names that are permitted to run against the Railway API.
+// Any mutation not on this list — especially anything deploy-related — will be blocked
+// before a network request is ever made.
+const RAILWAY_ALLOWED_OPERATIONS = ['UpsertVariables'];
+
+// Keywords whose presence in a query string indicates a deploy-related operation.
+// Checked case-insensitively against the full query text.
+const RAILWAY_DEPLOY_KEYWORDS = [
+  'deploy',
+  'deployment',
+  'redeploy',
+  'trigger',
+  'rollback',
+  'restart',
+  'serviceCreate',
+  'serviceDelete',
+  'serviceUpdate',
+];
+
+function assertSafeRailwayQuery(query) {
+  const lower = query.toLowerCase();
+  for (const keyword of RAILWAY_DEPLOY_KEYWORDS) {
+    if (lower.includes(keyword.toLowerCase())) {
+      console.warn(`[Railway safeguard] BLOCKED — query contains forbidden keyword "${keyword}". Full query: ${query}`);
+      return false;
+    }
+  }
+  // Extract the operation name (e.g. "mutation UpsertVariables(…)") and verify it is
+  // explicitly on the allowlist so only known-safe mutations can proceed.
+  const operationMatch = query.match(/mutation\s+(\w+)/i);
+  if (!operationMatch) {
+    console.warn(`[Railway safeguard] BLOCKED — could not identify a named mutation in query: ${query}`);
+    return false;
+  }
+  const operationName = operationMatch[1];
+  if (!RAILWAY_ALLOWED_OPERATIONS.includes(operationName)) {
+    console.warn(`[Railway safeguard] BLOCKED — operation "${operationName}" is not on the allowlist. Permitted: ${RAILWAY_ALLOWED_OPERATIONS.join(', ')}`);
+    return false;
+  }
+  return true;
+}
+
 async function saveToRailway(vars) {
   if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_ENVIRONMENT_ID || !RAILWAY_SERVICE_ID) return;
+
+  const query = `mutation UpsertVariables($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }`;
+
+  // Safety check: reject the request if the query looks deploy-related or is not
+  // on the explicit allowlist. This prevents accidental deploy triggers even if
+  // this function is ever called with a different query in the future.
+  if (!assertSafeRailwayQuery(query)) return;
+
   try {
     await fetch('https://backboard.railway.app/graphql/v2', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
       body: JSON.stringify({
-        query: `mutation UpsertVariables($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }`,
+        query,
         variables: { input: { projectId: RAILWAY_PROJECT_ID, environmentId: RAILWAY_ENVIRONMENT_ID, serviceId: RAILWAY_SERVICE_ID, variables: vars } }
       })
     });
