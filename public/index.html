@@ -562,7 +562,8 @@ async function submitRegistration() {
 }
 
 async function recheckRevoked() {
-  document.getElementById('revokedSpinner').style.display = 'inline-block';
+  const spinner = document.getElementById('revokedSpinner');
+  spinner.style.display = 'inline-block';
   try {
     const res = await fetch(`${SERVER}/api/device/status`, {
       method: 'POST',
@@ -570,12 +571,18 @@ async function recheckRevoked() {
       body: JSON.stringify({ fingerprint })
     });
     const data = await res.json();
-    if (data.status !== 'revoked') {
+    spinner.style.display = 'none';
+    if (data.status === 'approved') {
       document.getElementById('revokedPage').style.display = 'none';
-      handleStatus(data.status);
+      handleStatus('approved');
+    } else if (data.status === 'pending') {
+      document.getElementById('revokedPage').style.display = 'none';
+      showWaitPage();
     }
-  } catch(e) {}
-  document.getElementById('revokedSpinner').style.display = 'none';
+    // if still revoked, do nothing — stay on revoked screen
+  } catch(e) {
+    spinner.style.display = 'none';
+  }
 }
 
 function handleStatus(status) {
