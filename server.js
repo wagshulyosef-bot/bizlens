@@ -244,7 +244,9 @@ app.post('/api/device/register', async (req, res) => {
 app.post('/api/device/status', (req, res) => {
   const { fingerprint } = req.body;
   if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
-  res.json({ status: devices[fingerprint]?.status || 'pending' });
+  const device = devices[fingerprint];
+  if (!device) return res.json({ status: 'pending', exists: false });
+  res.json({ status: device.status, exists: true });
 });
 
 app.post('/api/analyze', async (req, res) => {
