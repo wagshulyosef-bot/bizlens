@@ -30,26 +30,47 @@ function loadDevices() {
   } catch(e) { devices = {}; }
 }
 
-// Save devices in background — debounced so rapid changes batch together
+function loadGoogleTokens() {
+  try {
+    const raw = process.env.GOOGLE_TOKENS_JSON;
+    if (raw) { googleTokens = JSON.parse(raw); console.log(`Loaded ${Object.keys(googleTokens).length} Google tokens`); }
+  } catch(e) { googleTokens = {}; }
+}
+
+async function saveToRailway(vars) {
+  if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_ENVIRONMENT_ID || !RAILWAY_SERVICE_ID) return;
+  try {
+    await fetch('https://backboard.railway.app/graphql/v2', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
+      body: JSON.stringify({
+        query: `mutation UpsertVariables($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }`,
+        variables: { input: { projectId: RAILWAY_PROJECT_ID, environmentId: RAILWAY_ENVIRONMENT_ID, serviceId: RAILWAY_SERVICE_ID, variables: vars } }
+      })
+    });
+  } catch(e) { console.error('Failed to save to Railway:', e); }
+}
+
+let saveTimer = null;
 function saveDevices() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
-    if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_ENVIRONMENT_ID || !RAILWAY_SERVICE_ID) return;
-    try {
-      await fetch('https://backboard.railway.app/graphql/v2', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
-        body: JSON.stringify({
-          query: `mutation UpsertVariables($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }`,
-          variables: { input: { projectId: RAILWAY_PROJECT_ID, environmentId: RAILWAY_ENVIRONMENT_ID, serviceId: RAILWAY_SERVICE_ID, variables: { DEVICES_JSON: JSON.stringify(devices) } } }
-        })
-      });
-      console.log('Devices saved to Railway');
-    } catch(e) { console.error('Failed to save devices:', e); }
-  }, 500); // wait 500ms before saving to batch rapid changes
+    await saveToRailway({ DEVICES_JSON: JSON.stringify(devices) });
+    console.log('Devices saved to Railway');
+  }, 500);
+}
+
+let tokenSaveTimer = null;
+function saveGoogleTokens() {
+  if (tokenSaveTimer) clearTimeout(tokenSaveTimer);
+  tokenSaveTimer = setTimeout(async () => {
+    await saveToRailway({ GOOGLE_TOKENS_JSON: JSON.stringify(googleTokens) });
+    console.log('Google tokens saved to Railway');
+  }, 500);
 }
 
 loadDevices();
+loadGoogleTokens();
 
 function adminAuth(req, res, next) {
   if (req.headers['x-admin-token'] !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
@@ -103,6 +124,7 @@ app.get('/auth/google/callback', async (req, res) => {
     const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${tokens.access_token}` } });
     const user = await userRes.json();
     googleTokens[fingerprint] = { ...tokens, email: user.email, connectedAt: new Date().toISOString() };
+    saveGoogleTokens();
     res.send(`<script>window.opener.postMessage({type:'google_auth_success',email:'${user.email}'},'*');window.close();</script>`);
   } catch(e) {
     res.send(`<script>window.opener.postMessage({type:'google_auth_error',error:'${e.message}'},'*');window.close();</script>`);
@@ -124,7 +146,7 @@ async function getValidAccessToken(fingerprint) {
       body: new URLSearchParams({ client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET, refresh_token: tokens.refresh_token, grant_type: 'refresh_token' })
     });
     const refreshed = await res.json();
-    if (!refreshed.error) { googleTokens[fingerprint] = { ...tokens, ...refreshed }; return refreshed.access_token; }
+    if (!refreshed.error) { googleTokens[fingerprint] = { ...tokens, ...refreshed }; saveGoogleTokens(); return refreshed.access_token; }
   }
   return tokens.access_token;
 }
@@ -202,7 +224,7 @@ GOOGLE CONNECTION: ${tokens ? `Connected as ${tokens.email}` : 'Not connected to
 
 TODAY IS: ${today} (${todayISO}) Pacific Time. Use this to calculate exact dates when the user says things like "next Friday" or "Thursday". Always use the correct YYYY-MM-DD date in your response.
 
-You can help draft emails, calendar events, and invoices. When drafting something, respond ONLY with this JSON format:
+You can help draft emails, calendar events, and invoices. When writing emails, write them the way a real person would — casual, direct, short sentences, no corporate fluff, no "I hope this email finds you well", no "please don't hesitate to reach out". Sound like the business owner themselves wrote it. When drafting something, respond ONLY with this JSON format:
 {
   "message": "conversational response explaining what you drafted",
   "draft": {
