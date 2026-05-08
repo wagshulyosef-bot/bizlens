@@ -205,6 +205,7 @@ function renderList(containerId, devices, type) {
       <div class="device-dot dot-${type}"></div>
       <div class="device-info">
         <div class="device-label">${escHtml(d.label)}</div>
+        ${d.timeWasters ? `<div class="device-meta" style="color:var(--text);margin-top:3px;font-family:'DM Sans',sans-serif;font-size:12px;">🕐 ${escHtml(d.timeWasters)}</div>` : ''}
         <div class="device-meta">ID: ${shortId} · First seen: ${firstSeen} · Last seen: ${lastSeen}</div>
       </div>
       <span class="status-badge badge-${type}">${type}</span>
