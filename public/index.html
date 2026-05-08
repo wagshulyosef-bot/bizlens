@@ -585,10 +585,9 @@ function handleStatus(status) {
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
 
   if (status === 'approved') {
-    // If we have saved data, go straight to dashboard
     const saved = loadStateFromStorage();
     if (saved && saved.bizName && saved.bizDesc) {
-      generateDashboard();
+      generateDashboard(true); // true = skip validation, loading from saved data
     } else {
       showPage(1);
     }
@@ -822,8 +821,8 @@ function collectState() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────
-function generateDashboard() {
-  if (!validateStep2()) return;
+function generateDashboard(skipValidation) {
+  if (!skipValidation && !validateStep2()) return;
   collectState();
   showPage(3);
   document.getElementById('navAgentBtn').style.display = 'inline-block';
