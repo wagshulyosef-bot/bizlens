@@ -504,19 +504,25 @@ let statusInterval = null;
 async function initAuth() {
   fingerprint = await getFingerprint();
 
-  // Check if already registered (name stored in localStorage)
   const savedName = localStorage.getItem('clarityai_name');
 
   try {
     if (savedName) {
-      // Already registered — just check status
+      // Already registered — check status
       const res = await fetch(`${SERVER}/api/device/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fingerprint })
       });
       const data = await res.json();
-      handleStatus(data.status);
+
+      if (!data.exists) {
+        // Device was deleted from admin — clear name and show registration form again
+        localStorage.removeItem('clarityai_name');
+        document.getElementById('registerPage').style.display = 'flex';
+      } else {
+        handleStatus(data.status);
+      }
     } else {
       // New device — show registration form
       document.getElementById('registerPage').style.display = 'flex';
