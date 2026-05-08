@@ -233,11 +233,18 @@ For regular conversation with no draft, use type "none". Be concise and specific
 
 // DEVICE ROUTES
 app.post('/api/device/register', async (req, res) => {
-  const { fingerprint, label } = req.body;
+  const { fingerprint, label, timeWasters } = req.body;
   if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
   const now = new Date().toISOString();
-  if (!devices[fingerprint]) { devices[fingerprint] = { status: 'pending', label: label || 'Unknown device', firstSeen: now, lastSeen: now }; await saveDevices(); }
-  else { devices[fingerprint].lastSeen = now; if (label) devices[fingerprint].label = label; await saveDevices(); }
+  if (!devices[fingerprint]) {
+    devices[fingerprint] = { status: 'pending', label: label || 'Unknown device', timeWasters: timeWasters || '', firstSeen: now, lastSeen: now };
+    await saveDevices();
+  } else {
+    devices[fingerprint].lastSeen = now;
+    if (label) devices[fingerprint].label = label;
+    if (timeWasters) devices[fingerprint].timeWasters = timeWasters;
+    await saveDevices();
+  }
   res.json({ status: devices[fingerprint].status });
 });
 
