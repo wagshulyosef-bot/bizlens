@@ -207,12 +207,33 @@
   </div>
 </nav>
 
+<!-- REGISTRATION FORM (first time only) -->
+<div id="registerPage" style="display:none; align-items:center; justify-content:center; min-height:calc(100vh - 60px);">
+  <div class="wait-box" style="max-width:420px;">
+    <div class="wait-icon">👋</div>
+    <div class="wait-title">Request access</div>
+    <div class="wait-sub">Enter your details below. The administrator will review your request and grant you access shortly.</div>
+    <div style="text-align:left;margin-bottom:1rem;">
+      <div class="form-group">
+        <label>Full name</label>
+        <input type="text" id="regName" placeholder="e.g. Jane Smith" />
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Company <span>(optional)</span></label>
+        <input type="text" id="regCompany" placeholder="e.g. Acme Co" />
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="submitRegistration()">Request access →</button>
+    <div id="regError" style="color:var(--red);font-size:13px;margin-top:8px;min-height:20px;"></div>
+  </div>
+</div>
+
 <!-- WAITING FOR AUTHORIZATION -->
 <div id="waitPage" style="display:none;">
   <div class="wait-box">
     <div class="wait-icon">🔐</div>
     <div class="wait-title">Waiting for authorization</div>
-    <div class="wait-sub">Your device has been registered. The administrator needs to approve your access before you can use Clarity AI Pro. This usually takes a short while.</div>
+    <div class="wait-sub">Your request has been sent. The administrator needs to approve your access before you can use Clarity AI Pro. This usually takes a short while.</div>
     <div class="wait-id" id="waitDeviceId"></div>
     <br>
     <button class="wait-btn" onclick="checkStatus()"><span class="spinner" id="checkSpinner" style="display:none;"></span>Check again</button>
@@ -483,17 +504,50 @@ let statusInterval = null;
 async function initAuth() {
   fingerprint = await getFingerprint();
 
+  // Check if already registered (name stored in localStorage)
+  const savedName = localStorage.getItem('clarityai_name');
+
+  try {
+    if (savedName) {
+      // Already registered — just check status
+      const res = await fetch(`${SERVER}/api/device/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fingerprint })
+      });
+      const data = await res.json();
+      handleStatus(data.status);
+    } else {
+      // New device — show registration form
+      document.getElementById('registerPage').style.display = 'flex';
+    }
+  } catch(e) {
+    showWaitPage('Could not reach server. Check your connection.');
+  }
+}
+
+async function submitRegistration() {
+  const name = document.getElementById('regName').value.trim();
+  const company = document.getElementById('regCompany').value.trim();
+  const errEl = document.getElementById('regError');
+
+  if (!name) { errEl.textContent = 'Please enter your full name.'; return; }
+  errEl.textContent = '';
+
+  const label = company ? `${name} — ${company}` : name;
+  localStorage.setItem('clarityai_name', label);
+
   try {
     const res = await fetch(`${SERVER}/api/device/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, label: getDeviceLabel() })
+      body: JSON.stringify({ fingerprint, label })
     });
     const data = await res.json();
+    document.getElementById('registerPage').style.display = 'none';
     handleStatus(data.status);
   } catch(e) {
-    // Server unreachable — show error
-    showWaitPage('Could not reach server. Check your connection.');
+    errEl.textContent = 'Could not reach server. Please try again.';
   }
 }
 
