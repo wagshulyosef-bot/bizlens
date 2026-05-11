@@ -767,7 +767,6 @@ function init() {
     if (saved.industry) document.getElementById('industry').value = saved.industry;
     if (saved.bizDesc) document.getElementById('bizDesc').value = saved.bizDesc;
     if (saved.bizChallenges) document.getElementById('bizChallenges').value = saved.bizChallenges;
-    if (saved.bizTimeWasters) document.getElementById('bizTimeWasters').value = saved.bizTimeWasters;
     if (saved.extraContext) document.getElementById('extraContext').value = saved.extraContext;
     // Restore goals
     if (saved.goals?.length) {
@@ -857,7 +856,7 @@ function collectState() {
   state.industry = document.getElementById('industry').value;
   state.bizDesc = document.getElementById('bizDesc').value.trim();
   state.bizChallenges = document.getElementById('bizChallenges').value.trim();
-  state.bizTimeWasters = document.getElementById('bizTimeWasters').value.trim();
+  state.bizTimeWasters = localStorage.getItem('clarityai_timewasters') || '';
   state.extraContext = document.getElementById('extraContext').value.trim();
   state.goals = [...document.querySelectorAll('#goalTags .tag.selected')].map(t => t.textContent);
   state.months = [...document.querySelectorAll('.month-val')].map(i => parseFloat(i.value) || 0);
