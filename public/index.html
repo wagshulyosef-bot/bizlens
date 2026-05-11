@@ -597,7 +597,7 @@ function handleStatus(status) {
   if (status === 'approved') {
     const saved = loadStateFromStorage();
     if (saved && saved.bizName && saved.bizDesc) {
-      generateDashboard(true); // true = skip validation, loading from saved data
+      setTimeout(() => generateDashboard(true), 100);
     } else {
       showPage(1);
     }
