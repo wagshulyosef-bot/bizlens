@@ -37,70 +37,21 @@ function loadGoogleTokens() {
   } catch(e) { googleTokens = {}; }
 }
 
-// Allowlist of GraphQL operation names that are permitted to run against the Railway API.
-// Any mutation not on this list — especially anything deploy-related — will be blocked
-// before a network request is ever made.
-const RAILWAY_ALLOWED_OPERATIONS = ['UpsertVariables'];
-
-// Keywords whose presence in a query string indicates a deploy-related operation.
-// Checked case-insensitively against the full query text.
-const RAILWAY_DEPLOY_KEYWORDS = [
-  'deploy',
-  'deployment',
-  'redeploy',
-  'trigger',
-  'rollback',
-  'restart',
-  'serviceCreate',
-  'serviceDelete',
-  'serviceUpdate',
-];
-
-function assertSafeRailwayQuery(query) {
-  const lower = query.toLowerCase();
-  for (const keyword of RAILWAY_DEPLOY_KEYWORDS) {
-    if (lower.includes(keyword.toLowerCase())) {
-      console.warn(`[Railway safeguard] BLOCKED — query contains forbidden keyword "${keyword}". Full query: ${query}`);
-      return false;
-    }
-  }
-  // Extract the operation name (e.g. "mutation UpsertVariables(…)") and verify it is
-  // explicitly on the allowlist so only known-safe mutations can proceed.
-  const operationMatch = query.match(/mutation\s+(\w+)/i);
-  if (!operationMatch) {
-    console.warn(`[Railway safeguard] BLOCKED — could not identify a named mutation in query: ${query}`);
-    return false;
-  }
-  const operationName = operationMatch[1];
-  if (!RAILWAY_ALLOWED_OPERATIONS.includes(operationName)) {
-    console.warn(`[Railway safeguard] BLOCKED — operation "${operationName}" is not on the allowlist. Permitted: ${RAILWAY_ALLOWED_OPERATIONS.join(', ')}`);
-    return false;
-  }
-  return true;
-}
-
 async function saveToRailway(vars) {
   if (!RAILWAY_API_TOKEN || !RAILWAY_PROJECT_ID || !RAILWAY_ENVIRONMENT_ID || !RAILWAY_SERVICE_ID) return;
-
-  const query = `mutation UpsertVariables($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }`;
-
-  // Safety check: reject the request if the query looks deploy-related or is not
-  // on the explicit allowlist. This prevents accidental deploy triggers even if
-  // this function is ever called with a different query in the future.
-  if (!assertSafeRailwayQuery(query)) return;
-
   try {
     await fetch('https://backboard.railway.app/graphql/v2', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RAILWAY_API_TOKEN}` },
       body: JSON.stringify({
-        query,
+        query: `mutation UpsertVariables($input: VariableCollectionUpsertInput!) { variableCollectionUpsert(input: $input) }`,
         variables: { input: { projectId: RAILWAY_PROJECT_ID, environmentId: RAILWAY_ENVIRONMENT_ID, serviceId: RAILWAY_SERVICE_ID, variables: vars } }
       })
     });
   } catch(e) { console.error('Failed to save to Railway:', e); }
 }
 
+let saveTimer = null;
 function saveDevices() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
@@ -297,6 +248,30 @@ For regular conversation with no draft, use type "none". Be concise and specific
     const text = data.content.map(b => b.text || '').join('');
     try { res.json(JSON.parse(text.replace(/```json|```/g,'').trim())); }
     catch { res.json({ message: text, draft: { type: 'none' } }); }
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// CLAUDE DIRECT CHAT
+app.post('/api/chat', async (req, res) => {
+  const { fingerprint, messages, businessContext } = req.body;
+  if (!fingerprint) return res.status(400).json({ error: 'Missing fingerprint' });
+  if (!devices[fingerprint] || devices[fingerprint].status !== 'approved') return res.status(403).json({ error: 'Device not authorized' });
+  if (!ANTHROPIC_API_KEY) return res.status(500).json({ error: 'Server API key not configured' });
+
+  const system = `You are Claude, a helpful AI assistant built into Clarity AI Pro, a business intelligence platform. You help small business owners think through problems, get advice, and make better decisions.
+${businessContext ? `\nContext about the user's business: ${businessContext}` : ''}
+Be conversational, direct, and practical. Reference their business context when relevant.`;
+
+  try {
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1024, system, messages })
+    });
+    const data = await aiRes.json();
+    if (!aiRes.ok) throw new Error(data.error?.message || 'AI error');
+    const text = data.content.map(b => b.text || '').join('');
+    res.json({ text });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
