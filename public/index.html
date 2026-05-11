@@ -504,31 +504,35 @@ let statusInterval = null;
 async function initAuth() {
   fingerprint = await getFingerprint();
 
+  // Show a loading state immediately so there's never a white screen
+  document.getElementById('waitPage').style.display = 'flex';
+  document.getElementById('waitDeviceId').textContent = '';
+  document.querySelector('#waitPage .wait-sub').textContent = 'Connecting to server...';
+
   const savedName = localStorage.getItem('clarityai_name');
 
   try {
     if (savedName) {
-      // Already registered — check status
       const res = await fetch(`${SERVER}/api/device/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fingerprint })
       });
       const data = await res.json();
-
       if (!data.exists) {
-        // Device was deleted from admin — clear name and show registration form again
         localStorage.removeItem('clarityai_name');
+        document.getElementById('waitPage').style.display = 'none';
         document.getElementById('registerPage').style.display = 'flex';
       } else {
+        document.getElementById('waitPage').style.display = 'none';
         handleStatus(data.status);
       }
     } else {
-      // New device — show registration form
+      document.getElementById('waitPage').style.display = 'none';
       document.getElementById('registerPage').style.display = 'flex';
     }
   } catch(e) {
-    showWaitPage('Could not reach server. Check your connection.');
+    document.querySelector('#waitPage .wait-sub').textContent = 'Could not reach server. Check your connection.';
   }
 }
 
