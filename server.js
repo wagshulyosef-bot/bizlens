@@ -51,6 +51,7 @@ async function saveToRailway(vars) {
   } catch(e) { console.error('Failed to save to Railway:', e); }
 }
 
+let saveTimer = null;
 function saveDevices() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
@@ -265,12 +266,40 @@ Be conversational, direct, and practical. Reference their business context when 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1024, system, messages })
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1024, system, messages, stream: true })
     });
-    const data = await aiRes.json();
-    if (!aiRes.ok) throw new Error(data.error?.message || 'AI error');
-    const text = data.content.map(b => b.text || '').join('');
-    res.json({ text });
+
+    if (!aiRes.ok) {
+      const err = await aiRes.json();
+      return res.status(aiRes.status).json({ error: err.error?.message || 'AI error' });
+    }
+
+    // Stream response to client
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const reader = aiRes.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+      for (const line of lines) {
+        const data = line.slice(6);
+        if (data === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+            res.write(`data: ${JSON.stringify({ text: parsed.delta.text })}\n\n`);
+          }
+        } catch(e) {}
+      }
+    }
+    res.write('data: [DONE]\n\n');
+    res.end();
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
