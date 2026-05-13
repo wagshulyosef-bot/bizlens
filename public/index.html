@@ -1065,7 +1065,6 @@ async function sendChatMessage() {
   input.value = '';
   input.style.height = 'auto';
 
-  // Add user message
   addChatMessage('user', text);
   chatHistory.push({ role: 'user', content: text });
 
@@ -1073,13 +1072,16 @@ async function sendChatMessage() {
   btn.disabled = true;
   btn.textContent = '...';
 
-  // Typing indicator
-  const typing = document.createElement('div');
-  typing.className = 'chat-msg ai';
-  typing.id = 'chatTyping';
-  typing.innerHTML = '<div class="chat-msg-bubble"><div class="spinner" style="width:14px;height:14px;border-width:2px;"></div></div>';
-  document.getElementById('chatMessages').appendChild(typing);
-  document.getElementById('chatMessages').scrollTop = 99999;
+  // Create AI message bubble that we'll stream into
+  const messages = document.getElementById('chatMessages');
+  const aiMsg = document.createElement('div');
+  aiMsg.className = 'chat-msg ai';
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-msg-bubble';
+  bubble.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;"></div>';
+  aiMsg.appendChild(bubble);
+  messages.appendChild(aiMsg);
+  messages.scrollTop = messages.scrollHeight;
 
   try {
     const businessContext = state.bizName ? `The user's business: ${state.bizName}, ${state.industry}, ${state.bizDesc}` : '';
@@ -1088,17 +1090,41 @@ async function sendChatMessage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fingerprint, messages: chatHistory, businessContext })
     });
-    const data = await res.json();
-    typing.remove();
-    if (data.error) {
-      addChatMessage('ai', `Sorry, something went wrong: ${data.error}`);
-    } else {
-      chatHistory.push({ role: 'assistant', content: data.text });
-      addChatMessage('ai', data.text);
+
+    if (!res.ok) {
+      const err = await res.json();
+      bubble.textContent = `Sorry, something went wrong: ${err.error}`;
+      btn.disabled = false; btn.textContent = 'Send'; return;
     }
+
+    // Read the stream
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    bubble.innerHTML = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+      for (const line of lines) {
+        const data = line.slice(6);
+        if (data === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.text) {
+            fullText += parsed.text;
+            bubble.innerHTML = fullText.replace(/\n/g, '<br>');
+            messages.scrollTop = messages.scrollHeight;
+          }
+        } catch(e) {}
+      }
+    }
+
+    chatHistory.push({ role: 'assistant', content: fullText });
   } catch(e) {
-    typing.remove();
-    addChatMessage('ai', 'Could not connect to the server. Please try again.');
+    bubble.textContent = 'Could not connect to the server. Please try again.';
   }
 
   btn.disabled = false;
