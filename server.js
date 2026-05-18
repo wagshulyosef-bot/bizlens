@@ -51,7 +51,6 @@ async function saveToRailway(vars) {
   } catch(e) { console.error('Failed to save to Railway:', e); }
 }
 
-let saveTimer = null;
 function saveDevices() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
