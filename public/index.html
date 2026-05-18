@@ -1015,20 +1015,18 @@ function buildRevenueChart() {
         {
           label: 'Profit',
           data: [...profits, forecastProfit[vals.length]],
-          backgroundColor: (ctx) => ctx.dataIndex === vals.length ? 'rgba(99,102,241,0.45)' : 'rgba(59,130,246,0.85)',
+          backgroundColor: profits.map((_, i) => 'rgba(59,130,246,0.85)').concat(['rgba(99,102,241,0.45)']),
           borderRadius: { topLeft: 5, topRight: 5 },
-          borderSkipped: false,
-          barPercentage: 0.5,
-          categoryPercentage: 0.8
+          borderSkipped: 'bottom',
+          stack: 'stack'
         },
         {
           label: 'Expenses',
           data: [...expenseData, null],
           backgroundColor: 'rgba(239,68,68,0.7)',
           borderRadius: { bottomLeft: 5, bottomRight: 5 },
-          borderSkipped: false,
-          barPercentage: 0.5,
-          categoryPercentage: 0.8
+          borderSkipped: 'top',
+          stack: 'stack'
         }
       ]
     },
@@ -1037,8 +1035,9 @@ function buildRevenueChart() {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: '#5A6A85', font: { size: 11 } }, grid: { display: false }, border: { display: false } },
+        x: { stacked: true, ticks: { color: '#5A6A85', font: { size: 11 } }, grid: { display: false }, border: { display: false } },
         y: {
+          stacked: false,
           ticks: { color: '#5A6A85', font: { size: 11 }, callback: v => '$' + (Math.abs(v) >= 1000 ? (v < 0 ? '-' : '') + Math.round(Math.abs(v)/1000) + 'k' : v) },
           grid: { color: 'rgba(255,255,255,0.04)' },
           border: { display: false }
