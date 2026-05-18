@@ -35,6 +35,7 @@
   .nav-agent-btn:hover { color: #fff; border-color: var(--accent); background: var(--accent-glow); }
   .nav-agent-btn.active { color: var(--accent2); border-color: var(--accent); background: var(--accent-glow); }
 
+  /* AGENT PAGE */
   #agentPage { display: none; min-height: calc(100vh - 64px); background: var(--bg); position: relative; z-index: 1; }
   .agent-layout { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 64px); }
   .agent-sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
@@ -79,7 +80,12 @@
   .invoice-total { font-weight: 600; font-size: 15px; margin-top: 8px; text-align: right; color: var(--green-text); }
   .success-msg { font-size: 12px; color: var(--green-text); background: var(--green-light); padding: 6px 10px; border-radius: var(--radius-sm); margin-top: 6px; border: 1px solid rgba(16,185,129,0.2); }
   .error-msg-agent { font-size: 12px; color: var(--red); background: var(--red-light); padding: 6px 10px; border-radius: var(--radius-sm); margin-top: 6px; border: 1px solid rgba(239,68,68,0.2); }
+  .phone-input-row { display: flex; gap: 8px; margin-top: 10px; }
+  .phone-input-row input { flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: "DM Sans", sans-serif; font-size: 13px; color: var(--text); background: var(--surface3); outline: none; }
+  .phone-input-row input:focus { border-color: var(--accent); }
+  .phone-input-row button { padding: 8px 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
 
+  /* CHAT PAGE */
   #chatPage { display: none; height: calc(100vh - 64px); flex-direction: column; background: var(--bg); position: relative; z-index: 1; }
   .chat-header { padding: 1rem 2rem; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .chat-header-title { font-size: 15px; font-weight: 600; color: var(--text); }
@@ -99,6 +105,37 @@
   .chat-send-btn:hover { background: var(--accent-dark); }
   .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+  /* HIT LIST PAGE */
+  #hitlistPage { display: none; height: calc(100vh - 64px); flex-direction: column; background: var(--bg); position: relative; z-index: 1; }
+  .hitlist-body { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; max-width: 800px; width: 100%; margin: 0 auto; }
+  .hitlist-input-area { padding: 1rem 2rem; border-top: 1px solid var(--border); background: var(--surface); }
+  .hitlist-input-inner { max-width: 800px; margin: 0 auto; display: flex; gap: 10px; }
+  .hitlist-input { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: "DM Sans", sans-serif; font-size: 14px; color: var(--text); background: var(--surface2); outline: none; transition: border-color 0.2s; }
+  .hitlist-input:focus { border-color: var(--accent); }
+  .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; transition: all 0.2s; }
+  .task-item:hover { border-color: var(--border2); }
+  .task-item.done { opacity: 0.45; }
+  .task-item.done .task-text { text-decoration: line-through; color: var(--muted); }
+  .task-checkbox { width: 18px; height: 18px; border: 2px solid var(--border2); border-radius: 4px; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .task-checkbox.checked { background: var(--accent); border-color: var(--accent); }
+  .task-checkbox.checked::after { content: "✓"; color: white; font-size: 11px; font-weight: 700; }
+  .task-content { flex: 1; min-width: 0; }
+  .task-text { font-size: 14px; color: var(--text); line-height: 1.4; }
+  .task-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+  .task-category { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .cat-urgent { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+  .cat-follow-up { background: rgba(59,130,246,0.15); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); }
+  .cat-admin { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+  .cat-growth { background: rgba(16,185,129,0.15); color: var(--green-text); border: 1px solid rgba(16,185,129,0.2); }
+  .cat-personal { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border); }
+  .task-ai-note { font-size: 11px; color: var(--muted); font-style: italic; }
+  .task-delete { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; transition: color 0.15s; line-height: 1; }
+  .task-delete:hover { color: var(--red); }
+  .hitlist-empty { text-align: center; padding: 3rem; color: var(--muted); }
+  .hitlist-empty-icon { font-size: 40px; margin-bottom: 1rem; }
+  .hitlist-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 1.25rem 0 8px; }
+
+  /* PAGES */
   .page { display: none; min-height: calc(100vh - 64px); position: relative; z-index: 1; }
   .page.active { display: block; }
 
@@ -223,18 +260,19 @@
 
 <nav>
   <div class="nav-logo"><span class="nav-logo-dot"></span>Clarity<span> AI Pro</span></div>
-  <div style="display:flex;align-items:center;">
+  <div style="display:flex;align-items:center;gap:4px;">
     <div class="nav-steps">
       <div class="nav-step" id="navStep1">1 · About</div>
       <div class="nav-step" id="navStep2">2 · Data</div>
       <div class="nav-step" id="navStep3">3 · Dashboard</div>
     </div>
     <button class="nav-agent-btn" id="navAgentBtn" onclick="toggleAgent()" style="display:none;">🤖 AI Agent</button>
-    <button class="nav-agent-btn" id="navChatBtn" onclick="toggleChat()" style="display:none;">💬 Chat with Claude</button>
+    <button class="nav-agent-btn" id="navChatBtn" onclick="toggleChat()" style="display:none;">💬 Chat</button>
+    <button class="nav-agent-btn" id="navHitlistBtn" onclick="toggleHitlist()" style="display:none;">✅ Hit List</button>
   </div>
 </nav>
 
-<!-- REGISTRATION FORM (first time only) -->
+<!-- REGISTRATION FORM -->
 <div id="registerPage" style="display:none; align-items:center; justify-content:center; min-height:calc(100vh - 64px); position:relative; overflow:hidden;">
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.12) 0%, transparent 60%);pointer-events:none;"></div>
   <div style="position:absolute;top:20%;left:10%;width:300px;height:300px;background:radial-gradient(circle,rgba(59,130,246,0.06),transparent);border-radius:50%;pointer-events:none;"></div>
@@ -264,7 +302,7 @@
   </div>
 </div>
 
-<!-- WAITING FOR AUTHORIZATION -->
+<!-- WAITING -->
 <div id="waitPage" style="display:none; align-items:center; justify-content:center; min-height:calc(100vh - 64px); position:relative; overflow:hidden;">
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%, rgba(59,130,246,0.08) 0%, transparent 60%);pointer-events:none;"></div>
   <div style="position:relative;z-index:1;text-align:center;max-width:420px;padding:2rem;">
@@ -276,7 +314,7 @@
     <div class="wait-sub" style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:1.5rem;">Your request has been sent. The administrator needs to approve your access before you can use Clarity AI Pro.</div>
     <div id="waitDeviceId" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:var(--radius-sm);display:inline-block;margin-bottom:1.5rem;"></div>
     <br>
-    <button class="wait-btn" onclick="checkStatus()" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 20px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted2);cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><span class="spinner" id="checkSpinner" style="display:none;"></span>Check again</button>
+    <button class="wait-btn" onclick="checkStatus()"><span class="spinner" id="checkSpinner" style="display:none;"></span>Check again</button>
   </div>
 </div>
 
@@ -287,77 +325,77 @@
     <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:50%;font-size:28px;margin-bottom:1.5rem;">🚫</div>
     <div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:10px;">Access revoked</div>
     <div style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:1.5rem;">Your access to Clarity AI Pro has been removed. Contact the administrator if you think this is a mistake.</div>
-    <button class="wait-btn" onclick="recheckRevoked()" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 20px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted2);cursor:pointer;"><span class="spinner" id="revokedSpinner" style="display:none;"></span>Check again</button>
+    <button class="wait-btn" onclick="recheckRevoked()"><span class="spinner" id="revokedSpinner" style="display:none;"></span>Check again</button>
   </div>
 </div>
 
-<!-- PAGE 1: BUSINESS INFO -->
+<!-- PAGE 1 -->
 <div class="page" id="page1">
   <div style="position:relative;overflow:hidden;padding:3rem 0 0;">
     <div style="position:absolute;top:0;left:0;right:0;height:300px;background:radial-gradient(ellipse at 30% 0%, rgba(59,130,246,0.08) 0%, transparent 60%);pointer-events:none;"></div>
-  <div class="step-container" style="position:relative;z-index:1;">
-    <div class="step-header">
-      <div class="step-eyebrow">Step 1 of 2</div>
-      <div class="step-title">Tell us about your business</div>
-      <div class="step-subtitle">This helps the AI give you insights that actually make sense for your industry and situation.</div>
-    </div>
-    <div class="card">
-      <div class="form-row">
-        <div class="form-group" style="margin-bottom:0;">
-          <label>Business name</label>
-          <input type="text" id="bizName" placeholder="e.g. Maple Street Boutique" />
+    <div class="step-container" style="position:relative;z-index:1;">
+      <div class="step-header">
+        <div class="step-eyebrow">Step 1 of 2</div>
+        <div class="step-title">Tell us about your business</div>
+        <div class="step-subtitle">This helps the AI give you insights that actually make sense for your industry and situation.</div>
+      </div>
+      <div class="card">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Business name</label>
+            <input type="text" id="bizName" placeholder="e.g. Maple Street Boutique" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Industry</label>
+            <select id="industry">
+              <option value="">Select industry...</option>
+              <option>Retail — physical goods</option>
+              <option>E-commerce</option>
+              <option>Food & beverage</option>
+              <option>Services / consulting</option>
+              <option>Manufacturing</option>
+              <option>Healthcare / wellness</option>
+              <option>Real estate</option>
+              <option>Hospitality / travel</option>
+              <option>Technology / SaaS</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>What does your business do? <span>(describe in your own words)</span></label>
+          <textarea id="bizDesc" placeholder="e.g. We sell handmade candles and home goods online and at two local markets." rows="4"></textarea>
         </div>
         <div class="form-group" style="margin-bottom:0;">
-          <label>Industry</label>
-          <select id="industry">
-            <option value="">Select industry...</option>
-            <option>Retail — physical goods</option>
-            <option>E-commerce</option>
-            <option>Food & beverage</option>
-            <option>Services / consulting</option>
-            <option>Manufacturing</option>
-            <option>Healthcare / wellness</option>
-            <option>Real estate</option>
-            <option>Hospitality / travel</option>
-            <option>Technology / SaaS</option>
-            <option>Other</option>
-          </select>
+          <label>What are your biggest business challenges right now? <span>(optional)</span></label>
+          <textarea id="bizChallenges" placeholder="e.g. Struggling to know when to raise prices without losing customers." rows="3"></textarea>
         </div>
       </div>
-    </div>
-    <div class="card">
-      <div class="form-group" style="margin-bottom:12px;">
-        <label>What does your business do? <span>(describe in your own words)</span></label>
-        <textarea id="bizDesc" placeholder="e.g. We sell handmade candles and home goods online and at two local markets. Most customers are women 25–45 who care about sustainability. Our peak season is November–December." rows="4"></textarea>
-      </div>
-      <div class="form-group" style="margin-bottom:0;">
-        <label>What are your biggest business challenges right now? <span>(optional)</span></label>
-        <textarea id="bizChallenges" placeholder="e.g. Struggling to know when to raise prices without losing customers. Not sure which products are actually profitable." rows="3"></textarea>
-      </div>
-    </div>
-    <div class="card">
-      <div class="form-group" style="margin-bottom:0;">
-        <label>What goals matter most to you?</label>
-        <div class="tag-row" id="goalTags">
-          <span class="tag" onclick="toggleTag(this)">Increase revenue</span>
-          <span class="tag" onclick="toggleTag(this)">Improve margins</span>
-          <span class="tag" onclick="toggleTag(this)">Reduce costs</span>
-          <span class="tag" onclick="toggleTag(this)">Grow customer base</span>
-          <span class="tag" onclick="toggleTag(this)">Optimize pricing</span>
-          <span class="tag" onclick="toggleTag(this)">Forecast demand</span>
-          <span class="tag" onclick="toggleTag(this)">Understand trends</span>
-          <span class="tag" onclick="toggleTag(this)">Beat competitors</span>
+      <div class="card">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>What goals matter most to you?</label>
+          <div class="tag-row" id="goalTags">
+            <span class="tag" onclick="toggleTag(this)">Increase revenue</span>
+            <span class="tag" onclick="toggleTag(this)">Improve margins</span>
+            <span class="tag" onclick="toggleTag(this)">Reduce costs</span>
+            <span class="tag" onclick="toggleTag(this)">Grow customer base</span>
+            <span class="tag" onclick="toggleTag(this)">Optimize pricing</span>
+            <span class="tag" onclick="toggleTag(this)">Forecast demand</span>
+            <span class="tag" onclick="toggleTag(this)">Understand trends</span>
+            <span class="tag" onclick="toggleTag(this)">Beat competitors</span>
+          </div>
         </div>
       </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goToStep2()">Continue to data entry →</button>
+      </div>
     </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="goToStep2()">Continue to data entry →</button>
-    </div>
-  </div>
   </div>
 </div>
 
-<!-- PAGE 2: DATA ENTRY -->
+<!-- PAGE 2 -->
 <div class="page" id="page2">
   <div class="step-container">
     <div class="step-header">
@@ -432,9 +470,7 @@
     <div class="dash-grid" style="margin-bottom:1.5rem;">
       <div class="dash-card">
         <div class="dash-card-title" style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            Revenue trend <span id="forecastBadge" style="font-size:11px;color:var(--muted);font-weight:400;"></span>
-          </div>
+          <div style="display:flex;align-items:center;gap:10px;">Revenue trend <span id="forecastBadge" style="font-size:11px;color:var(--muted);font-weight:400;"></span></div>
           <div style="display:flex;gap:4px;">
             <button id="chartToggleBar" onclick="setChartMode('bar')" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent2);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">Bar</button>
             <button id="chartTogglePie" onclick="setChartMode('pie')" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">Pie</button>
@@ -466,7 +502,6 @@
 <!-- AI AGENT PAGE -->
 <div id="agentPage">
   <div class="agent-layout">
-    <!-- SIDEBAR -->
     <div class="agent-sidebar">
       <div>
         <div class="agent-sidebar-title">Google Account</div>
@@ -479,10 +514,28 @@
         </div>
       </div>
       <div>
+        <div class="agent-sidebar-title">Phone / SMS</div>
+        <div class="google-connect-box">
+          <div class="google-connect-status">
+            <div class="status-dot" id="smsDot"></div>
+            <span id="smsStatusText">Not connected</span>
+          </div>
+          <div id="smsConnectForm">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Enter your phone number to send SMS to clients</div>
+            <div class="phone-input-row">
+              <input type="text" id="smsPhoneInput" placeholder="e.g. 310-555-1234" />
+              <button onclick="connectSMS()">Connect</button>
+            </div>
+            <div id="smsError" style="font-size:12px;color:var(--red);margin-top:6px;"></div>
+          </div>
+        </div>
+      </div>
+      <div>
         <div class="agent-sidebar-title">Quick actions</div>
         <div style="display:flex;flex-direction:column;gap:6px;">
           <button class="quick-action" onclick="quickAction('Draft a follow-up email to a client who hasn\'t paid their invoice yet')"><span class="quick-action-icon">✉️</span> Invoice follow-up email</button>
           <button class="quick-action" onclick="quickAction('Schedule a check-in call with a client for next week')"><span class="quick-action-icon">📅</span> Schedule client call</button>
+          <button class="quick-action" onclick="quickAction('Send a text message to follow up with a client')"><span class="quick-action-icon">💬</span> Client text follow-up</button>
           <button class="quick-action" onclick="quickAction('Draft a thank you email to a client after completing a project')"><span class="quick-action-icon">🙏</span> Thank you email</button>
           <button class="quick-action" onclick="quickAction('Create an invoice for a client')"><span class="quick-action-icon">🧾</span> Create invoice</button>
           <button class="quick-action" onclick="quickAction('Draft an email to introduce my business to a potential new client')"><span class="quick-action-icon">🤝</span> New client intro</button>
@@ -492,16 +545,14 @@
         <button onclick="toggleAgent()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;padding:4px 0;">← Back to dashboard</button>
       </div>
     </div>
-
-    <!-- CHAT -->
     <div class="agent-main">
       <div class="agent-messages" id="agentMessages">
         <div class="agent-msg ai">
-          <div class="agent-msg-bubble">Hi! I'm your AI business assistant. I can help you draft emails, schedule meetings, and create invoices — all tailored to your business. Connect your Google account on the left to send emails and create calendar events directly. What can I help you with today?</div>
+          <div class="agent-msg-bubble">Hi! I'm your AI business assistant. I can help you draft emails, schedule meetings, send texts, and create invoices — all tailored to your business. Connect your accounts on the left to get started. What can I help you with today?</div>
         </div>
       </div>
       <div class="agent-input-area">
-        <textarea class="agent-input" id="agentInput" placeholder="Ask me anything — draft an email, schedule a meeting, create an invoice..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAgentMessage();}"></textarea>
+        <textarea class="agent-input" id="agentInput" placeholder="Ask me anything — draft an email, schedule a meeting, send a text, create an invoice..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAgentMessage();}"></textarea>
         <button class="agent-send-btn" id="agentSendBtn" onclick="sendAgentMessage()">Send</button>
       </div>
     </div>
@@ -530,90 +581,73 @@
   </div>
 </div>
 
+<!-- HIT LIST PAGE -->
+<div id="hitlistPage">
+  <div class="chat-header">
+    <div>
+      <div class="chat-header-title">✅ Hit List</div>
+      <div class="chat-header-sub">Add tasks — AI organizes and prioritizes them for you</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button onclick="clearDoneTasks()" style="font-size:12px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;">Clear done</button>
+      <button onclick="toggleHitlist()" style="font-size:13px;color:var(--muted);background:none;border:none;cursor:pointer;">← Back to dashboard</button>
+    </div>
+  </div>
+  <div class="hitlist-body" id="hitlistBody">
+    <div class="hitlist-empty" id="hitlistEmpty">
+      <div class="hitlist-empty-icon">📋</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;">Your hit list is empty</div>
+      <div style="font-size:14px;color:var(--muted);">Add tasks below — the AI will organize and prioritize them automatically.</div>
+    </div>
+  </div>
+  <div class="hitlist-input-area">
+    <div class="hitlist-input-inner">
+      <input class="hitlist-input" id="hitlistInput" placeholder="Add a task — e.g. 'call John about invoice', 'order more inventory', 'post on Instagram'..." onkeydown="if(event.key==='Enter'){addTask();}" />
+      <button class="btn btn-primary" style="padding:10px 18px;font-size:14px;" onclick="addTask()">Add</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ─── CONFIG — set this to your Railway URL after deploying ─────
 const SERVER = 'https://bizlens-production.up.railway.app';
 
-// ─── SAVE & LOAD STATE ────────────────────────────────────────
 function saveStateToStorage() {
   try { localStorage.setItem('clarityai_state', JSON.stringify(state)); } catch(e) {}
 }
-
 function loadStateFromStorage() {
-  try {
-    const raw = localStorage.getItem('clarityai_state');
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
+  try { const raw = localStorage.getItem('clarityai_state'); if (raw) return JSON.parse(raw); } catch(e) {}
   return null;
 }
 
-// ─── DEVICE FINGERPRINTING ────────────────────────────────────
 async function getFingerprint() {
   const stored = localStorage.getItem('bizlens_fp');
   if (stored) return stored;
-
-  // Build a fingerprint from stable browser characteristics
-  const components = [
-    navigator.userAgent,
-    navigator.language,
-    screen.width + 'x' + screen.height,
-    screen.colorDepth,
-    new Date().getTimezoneOffset(),
-    navigator.hardwareConcurrency || 'unknown',
-    navigator.platform || 'unknown'
-  ].join('|');
-
-  // Hash it
+  const components = [navigator.userAgent, navigator.language, screen.width + 'x' + screen.height, screen.colorDepth, new Date().getTimezoneOffset(), navigator.hardwareConcurrency || 'unknown', navigator.platform || 'unknown'].join('|');
   const encoded = new TextEncoder().encode(components);
   const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const fp = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
-
   localStorage.setItem('bizlens_fp', fp);
   return fp;
 }
 
-function getDeviceLabel() {
-  return navigator.platform + ' — ' + navigator.userAgent.split('(')[1]?.split(')')[0]?.split(';')[0]?.trim() || 'Unknown';
-}
-
-// ─── AUTH FLOW ────────────────────────────────────────────────
 let fingerprint = null;
 let statusInterval = null;
 
 async function initAuth() {
   fingerprint = await getFingerprint();
-
-  // Show a loading state immediately so there's never a white screen
   document.getElementById('waitPage').style.display = 'flex';
   document.getElementById('waitDeviceId').textContent = '';
   document.querySelector('#waitPage .wait-sub').textContent = 'Connecting to server...';
-
   const savedName = localStorage.getItem('clarityai_name');
-
   try {
     if (savedName) {
-      const res = await fetch(`${SERVER}/api/device/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fingerprint })
-      });
+      const res = await fetch(`${SERVER}/api/device/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint }) });
       const data = await res.json();
-      if (!data.exists) {
-        localStorage.removeItem('clarityai_name');
-        document.getElementById('waitPage').style.display = 'none';
-        document.getElementById('registerPage').style.display = 'flex';
-      } else {
-        document.getElementById('waitPage').style.display = 'none';
-        handleStatus(data.status);
-      }
-    } else {
-      document.getElementById('waitPage').style.display = 'none';
-      document.getElementById('registerPage').style.display = 'flex';
-    }
-  } catch(e) {
-    document.querySelector('#waitPage .wait-sub').textContent = 'Could not reach server. Check your connection.';
-  }
+      if (!data.exists) { localStorage.removeItem('clarityai_name'); document.getElementById('waitPage').style.display = 'none'; document.getElementById('registerPage').style.display = 'flex'; }
+      else { document.getElementById('waitPage').style.display = 'none'; handleStatus(data.status); }
+    } else { document.getElementById('waitPage').style.display = 'none'; document.getElementById('registerPage').style.display = 'flex'; }
+  } catch(e) { document.querySelector('#waitPage .wait-sub').textContent = 'Could not reach server. Check your connection.'; }
 }
 
 async function submitRegistration() {
@@ -621,51 +655,30 @@ async function submitRegistration() {
   const company = document.getElementById('regCompany').value.trim();
   const timeWasters = document.getElementById('regTimeWasters').value.trim();
   const errEl = document.getElementById('regError');
-
   if (!name) { errEl.textContent = 'Please enter your full name.'; return; }
   if (!timeWasters) { errEl.textContent = 'Please answer the time-wasters question.'; return; }
   errEl.textContent = '';
-
   const label = company ? `${name} — ${company}` : name;
   localStorage.setItem('clarityai_name', label);
   localStorage.setItem('clarityai_timewasters', timeWasters);
-
   try {
-    const res = await fetch(`${SERVER}/api/device/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, label, timeWasters })
-    });
+    const res = await fetch(`${SERVER}/api/device/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint, label, timeWasters }) });
     const data = await res.json();
     document.getElementById('registerPage').style.display = 'none';
     handleStatus(data.status);
-  } catch(e) {
-    errEl.textContent = 'Could not reach server. Please try again.';
-  }
+  } catch(e) { errEl.textContent = 'Could not reach server. Please try again.'; }
 }
 
 async function recheckRevoked() {
   const spinner = document.getElementById('revokedSpinner');
   spinner.style.display = 'inline-block';
   try {
-    const res = await fetch(`${SERVER}/api/device/status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint })
-    });
+    const res = await fetch(`${SERVER}/api/device/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint }) });
     const data = await res.json();
     spinner.style.display = 'none';
-    if (data.status === 'approved') {
-      document.getElementById('revokedPage').style.display = 'none';
-      handleStatus('approved');
-    } else if (data.status === 'pending') {
-      document.getElementById('revokedPage').style.display = 'none';
-      showWaitPage();
-    }
-    // if still revoked, do nothing — stay on revoked screen
-  } catch(e) {
-    spinner.style.display = 'none';
-  }
+    if (data.status === 'approved') { document.getElementById('revokedPage').style.display = 'none'; handleStatus('approved'); }
+    else if (data.status === 'pending') { document.getElementById('revokedPage').style.display = 'none'; showWaitPage(); }
+  } catch(e) { spinner.style.display = 'none'; }
 }
 
 function handleStatus(status) {
@@ -673,20 +686,12 @@ function handleStatus(status) {
   document.getElementById('waitPage').style.display = 'none';
   document.getElementById('revokedPage').style.display = 'none';
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-
   if (status === 'approved') {
     const saved = loadStateFromStorage();
-    if (saved && saved.bizName && saved.bizDesc) {
-      setTimeout(() => generateDashboard(true), 100);
-    } else {
-      showPage(1);
-    }
-  } else if (status === 'revoked') {
-    document.getElementById('revokedPage').style.display = 'flex';
-  } else {
-    showWaitPage();
-    statusInterval = setInterval(checkStatus, 10000);
-  }
+    if (saved && saved.bizName && saved.bizDesc) { setTimeout(() => generateDashboard(true), 100); }
+    else { showPage(1); }
+  } else if (status === 'revoked') { document.getElementById('revokedPage').style.display = 'flex'; }
+  else { showWaitPage(); statusInterval = setInterval(checkStatus, 10000); }
 }
 
 function showWaitPage(msg) {
@@ -698,34 +703,23 @@ function showWaitPage(msg) {
 async function checkStatus() {
   document.getElementById('checkSpinner').style.display = 'inline-block';
   try {
-    const res = await fetch(`${SERVER}/api/device/status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint })
-    });
+    const res = await fetch(`${SERVER}/api/device/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint }) });
     const data = await res.json();
     handleStatus(data.status);
   } catch(e) {}
   document.getElementById('checkSpinner').style.display = 'none';
 }
 
-// ─── STATE & NAV ──────────────────────────────────────────────
 const MONTHS_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#F97316','#EC4899'];
 let state = { bizName:'', industry:'', bizDesc:'', bizChallenges:'', bizTimeWasters:'', goals:[], extraContext:'', months:[], expenses:[], products:[], categories:[] };
 let revChartInst = null, catChartInst = null;
 
 function showPage(n) {
-  document.querySelectorAll('.page').forEach((p,i) => {
-    p.style.display = 'none';
-    p.classList.remove('active');
-  });
+  document.querySelectorAll('.page').forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
   const page = document.getElementById('page' + n);
   if (page) { page.style.display = 'block'; page.classList.add('active'); }
-  document.querySelectorAll('.nav-step').forEach((s,i) => {
-    s.classList.toggle('active', i+1===n);
-    s.classList.toggle('done', i+1<n);
-  });
+  document.querySelectorAll('.nav-step').forEach((s,i) => { s.classList.toggle('active', i+1===n); s.classList.toggle('done', i+1<n); });
   window.scrollTo(0,0);
 }
 
@@ -733,24 +727,15 @@ function showFieldError(id, msg) {
   const el = document.getElementById(id);
   el.style.borderColor = 'var(--red)';
   el.focus();
-  // Remove any existing error message
   const existing = document.getElementById(id + '_error');
   if (existing) existing.remove();
-  // Add error message below field
   const err = document.createElement('div');
   err.id = id + '_error';
   err.style.cssText = 'color:var(--red);font-size:12px;margin-top:5px;';
   err.textContent = msg;
   el.parentElement.appendChild(err);
-  // Remove error on input
-  el.addEventListener('input', () => {
-    el.style.borderColor = '';
-    err.remove();
-  }, { once: true });
-  el.addEventListener('change', () => {
-    el.style.borderColor = '';
-    err.remove();
-  }, { once: true });
+  el.addEventListener('input', () => { el.style.borderColor = ''; err.remove(); }, { once: true });
+  el.addEventListener('change', () => { el.style.borderColor = ''; err.remove(); }, { once: true });
 }
 
 function validateStep1() {
@@ -765,64 +750,31 @@ function validateStep1() {
 
 function validateStep2() {
   const months = [...document.querySelectorAll('.month-val')].map(i => parseFloat(i.value) || 0);
-  const hasRevenue = months.some(v => v > 0);
-  if (!hasRevenue) {
-    alert('Please enter at least one month of revenue before continuing.');
-    return false;
-  }
-  const products = [...document.querySelectorAll('.product-row')].filter(r => {
-    const name = r.querySelector('.prod-name').value.trim();
-    const price = parseFloat(r.querySelector('.prod-price').value) || 0;
-    return name && price > 0;
-  });
-  if (!products.length) {
-    alert('Please add at least one product or service with a name and price before continuing.');
-    return false;
-  }
+  if (!months.some(v => v > 0)) { alert('Please enter at least one month of revenue before continuing.'); return false; }
+  const products = [...document.querySelectorAll('.product-row')].filter(r => r.querySelector('.prod-name').value.trim() && parseFloat(r.querySelector('.prod-price').value) > 0);
+  if (!products.length) { alert('Please add at least one product or service with a name and price before continuing.'); return false; }
   return true;
 }
 
 function goToStep1() { showPage(1); }
-function goToStep2() {
-  if (!validateStep1()) return;
-  showPage(2);
-}
+function goToStep2() { if (!validateStep1()) return; showPage(2); }
 function toggleTag(el) { el.classList.toggle('selected'); }
 
 function init() {
   buildMonthInputs();
   addProductRow(); addProductRow(); addProductRow();
   addCategoryRow(); addCategoryRow();
-
-  // Restore saved state if available
   const saved = loadStateFromStorage();
   if (saved) {
     state = { ...state, ...saved };
-    // Populate about fields
     if (saved.bizName) document.getElementById('bizName').value = saved.bizName;
     if (saved.industry) document.getElementById('industry').value = saved.industry;
     if (saved.bizDesc) document.getElementById('bizDesc').value = saved.bizDesc;
     if (saved.bizChallenges) document.getElementById('bizChallenges').value = saved.bizChallenges;
     if (saved.extraContext) document.getElementById('extraContext').value = saved.extraContext;
-    // Restore goals
-    if (saved.goals?.length) {
-      document.querySelectorAll('#goalTags .tag').forEach(t => {
-        if (saved.goals.includes(t.textContent)) t.classList.add('selected');
-      });
-    }
-    // Restore months
-    if (saved.months?.length) {
-      document.querySelectorAll('.month-val').forEach((inp, i) => {
-        if (saved.months[i]) inp.value = saved.months[i];
-      });
-    }
-    // Restore expenses
-    if (saved.expenses?.length) {
-      document.querySelectorAll('.month-exp-val').forEach((inp, i) => {
-        if (saved.expenses[i]) inp.value = saved.expenses[i];
-      });
-    }
-    // Restore products
+    if (saved.goals?.length) { document.querySelectorAll('#goalTags .tag').forEach(t => { if (saved.goals.includes(t.textContent)) t.classList.add('selected'); }); }
+    if (saved.months?.length) { document.querySelectorAll('.month-val').forEach((inp, i) => { if (saved.months[i]) inp.value = saved.months[i]; }); }
+    if (saved.expenses?.length) { document.querySelectorAll('.month-exp-val').forEach((inp, i) => { if (saved.expenses[i]) inp.value = saved.expenses[i]; }); }
     if (saved.products?.length) {
       document.getElementById('productRows').innerHTML = '';
       saved.products.forEach(p => {
@@ -835,7 +787,6 @@ function init() {
         row.querySelector('.prod-cost').value = p.cost;
       });
     }
-    // Restore categories
     if (saved.categories?.length) {
       document.getElementById('categoryRows').innerHTML = '';
       saved.categories.forEach(c => {
@@ -847,7 +798,7 @@ function init() {
       });
     }
   }
-
+  loadHitlist();
   initAuth();
 }
 
@@ -855,17 +806,14 @@ function buildMonthInputs() {
   const now = new Date();
   const revWrap = document.getElementById('monthInputs');
   const expWrap = document.getElementById('monthExpenseInputs');
-  revWrap.innerHTML = '';
-  expWrap.innerHTML = '';
+  revWrap.innerHTML = ''; expWrap.innerHTML = '';
   for (let i = 7; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const label = MONTHS_LABELS[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2);
-    const revDiv = document.createElement('div');
-    revDiv.className = 'month-cell';
+    const revDiv = document.createElement('div'); revDiv.className = 'month-cell';
     revDiv.innerHTML = `<label>${label}</label><input type="number" placeholder="0" min="0" step="100" class="month-val" />`;
     revWrap.appendChild(revDiv);
-    const expDiv = document.createElement('div');
-    expDiv.className = 'month-cell';
+    const expDiv = document.createElement('div'); expDiv.className = 'month-cell';
     expDiv.innerHTML = `<label>${label}</label><input type="number" placeholder="0" min="0" step="100" class="month-exp-val" />`;
     expWrap.appendChild(expDiv);
   }
@@ -873,29 +821,15 @@ function buildMonthInputs() {
 
 let productCount = 0;
 function addProductRow() {
-  const id = productCount++;
-  const row = document.createElement('div');
-  row.className = 'product-row';
-  row.innerHTML = `
-    <input type="text" placeholder="Product / service name" class="prod-name" />
-    <input type="number" placeholder="Price" min="0" step="0.01" class="prod-price" />
-    <input type="number" placeholder="Units/mo" min="0" class="prod-units" />
-    <input type="number" placeholder="Cost" min="0" step="0.01" class="prod-cost" />
-    <button class="remove-btn" onclick="this.parentElement.remove()">×</button>`;
+  productCount++;
+  const row = document.createElement('div'); row.className = 'product-row';
+  row.innerHTML = `<input type="text" placeholder="Product / service name" class="prod-name" /><input type="number" placeholder="Price" min="0" step="0.01" class="prod-price" /><input type="number" placeholder="Units/mo" min="0" class="prod-units" /><input type="number" placeholder="Cost" min="0" step="0.01" class="prod-cost" /><button class="remove-btn" onclick="this.parentElement.remove()">×</button>`;
   document.getElementById('productRows').appendChild(row);
 }
 
-let catCount = 0;
 function addCategoryRow() {
-  const row = document.createElement('div');
-  row.className = 'form-row';
-  row.style.marginBottom = '8px';
-  row.innerHTML = `
-    <input type="text" placeholder="Category name (e.g. Apparel)" class="cat-name" />
-    <div style="display:flex;gap:8px;align-items:center;">
-      <input type="number" placeholder="% of sales" min="0" max="100" class="cat-pct" style="flex:1;" />
-      <button class="remove-btn" onclick="this.closest('.form-row').remove()">×</button>
-    </div>`;
+  const row = document.createElement('div'); row.className = 'form-row'; row.style.marginBottom = '8px';
+  row.innerHTML = `<input type="text" placeholder="Category name (e.g. Apparel)" class="cat-name" /><div style="display:flex;gap:8px;align-items:center;"><input type="number" placeholder="% of sales" min="0" max="100" class="cat-pct" style="flex:1;" /><button class="remove-btn" onclick="this.closest('.form-row').remove()">×</button></div>`;
   document.getElementById('categoryRows').appendChild(row);
 }
 
@@ -909,32 +843,19 @@ function collectState() {
   state.goals = [...document.querySelectorAll('#goalTags .tag.selected')].map(t => t.textContent);
   state.months = [...document.querySelectorAll('.month-val')].map(i => parseFloat(i.value) || 0);
   state.expenses = [...document.querySelectorAll('.month-exp-val')].map(i => parseFloat(i.value) || 0);
-  state.products = [...document.querySelectorAll('.product-row')].map(r => ({
-    name: r.querySelector('.prod-name').value.trim(),
-    price: parseFloat(r.querySelector('.prod-price').value) || 0,
-    units: parseFloat(r.querySelector('.prod-units').value) || 0,
-    cost: parseFloat(r.querySelector('.prod-cost').value) || 0
-  })).filter(p => p.name);
-  state.categories = [...document.querySelectorAll('#categoryRows .form-row')].map(r => ({
-    name: r.querySelector('.cat-name').value.trim(),
-    pct: parseFloat(r.querySelector('.cat-pct').value) || 0
-  })).filter(c => c.name);
+  state.products = [...document.querySelectorAll('.product-row')].map(r => ({ name: r.querySelector('.prod-name').value.trim(), price: parseFloat(r.querySelector('.prod-price').value) || 0, units: parseFloat(r.querySelector('.prod-units').value) || 0, cost: parseFloat(r.querySelector('.prod-cost').value) || 0 })).filter(p => p.name);
+  state.categories = [...document.querySelectorAll('#categoryRows .form-row')].map(r => ({ name: r.querySelector('.cat-name').value.trim(), pct: parseFloat(r.querySelector('.cat-pct').value) || 0 })).filter(c => c.name);
   saveStateToStorage();
 }
 
-// ─── DASHBOARD ────────────────────────────────────────────────
 function generateDashboard(skipValidation) {
   if (!skipValidation && !validateStep2()) return;
   collectState();
   showPage(3);
-  document.getElementById('navAgentBtn').style.display = 'inline-block';
-  document.getElementById('navChatBtn').style.display = 'inline-block';
+  ['navAgentBtn','navChatBtn','navHitlistBtn'].forEach(id => document.getElementById(id).style.display = 'inline-block');
   document.getElementById('dashBizName').textContent = state.bizName;
   document.getElementById('dashBizMeta').textContent = [state.industry, state.bizDesc.slice(0,80) + (state.bizDesc.length > 80 ? '...' : '')].filter(Boolean).join(' · ');
-  buildMetrics();
-  buildRevenueChart();
-  buildCategoryChart();
-  runAI();
+  buildMetrics(); buildRevenueChart(); buildCategoryChart(); runAI();
 }
 
 function buildMetrics() {
@@ -946,21 +867,13 @@ function buildMetrics() {
   const profit = last - lastExp;
   const margin = last > 0 ? Math.round((profit / last) * 100) : null;
   const totalUnits = state.products.reduce((s,p) => s + p.units, 0);
-  const avgPrice = state.products.length ? state.products.reduce((s,p) => s + p.price, 0) / state.products.length : 0;
-  const margins = state.products.filter(p => p.price > 0).map(p => (p.price - p.cost) / p.price);
-  const avgMargin = margins.length ? Math.round(margins.reduce((a,b) => a+b,0) / margins.length * 100) : null;
   const metrics = [
     { label: 'This month revenue', value: last ? '$' + last.toLocaleString() : '—', delta: revDelta !== null ? (revDelta >= 0 ? '+' : '') + revDelta + '%' : null, up: revDelta >= 0 },
     { label: 'This month profit', value: profit ? '$' + profit.toLocaleString() : '—' },
     { label: 'Net margin', value: margin !== null ? margin + '%' : '—' },
     { label: 'Monthly units sold', value: totalUnits ? totalUnits.toLocaleString() : '—' }
   ];
-  document.getElementById('metricsStrip').innerHTML = metrics.map(m => `
-    <div class="metric-card">
-      <div class="metric-label">${m.label}</div>
-      <div class="metric-value">${m.value}</div>
-      ${m.delta ? `<div class="metric-delta ${m.up ? 'delta-up' : 'delta-down'}">${m.delta} vs prev month</div>` : ''}
-    </div>`).join('');
+  document.getElementById('metricsStrip').innerHTML = metrics.map(m => `<div class="metric-card"><div class="metric-label">${m.label}</div><div class="metric-value">${m.value}</div>${m.delta ? `<div class="metric-delta ${m.up ? 'delta-up' : 'delta-down'}">${m.delta} vs prev month</div>` : ''}</div>`).join('');
 }
 
 let revPieChartInst = null;
@@ -970,109 +883,48 @@ function setChartMode(mode) {
   chartMode = mode;
   document.getElementById('barChartWrap').style.display = mode === 'bar' ? 'block' : 'none';
   document.getElementById('pieChartWrap').style.display = mode === 'pie' ? 'block' : 'none';
-  document.getElementById('chartToggleBar').style.cssText = mode === 'bar'
-    ? 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent2);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;'
-    : 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;';
-  document.getElementById('chartTogglePie').style.cssText = mode === 'pie'
-    ? 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent2);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;'
-    : 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;';
+  const activeStyle = 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent2);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;';
+  const inactiveStyle = 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;';
+  document.getElementById('chartToggleBar').style.cssText = mode === 'bar' ? activeStyle : inactiveStyle;
+  document.getElementById('chartTogglePie').style.cssText = mode === 'pie' ? activeStyle : inactiveStyle;
 }
 
 function buildRevenueChart() {
   if (revChartInst) revChartInst.destroy();
   if (revPieChartInst) revPieChartInst.destroy();
-
   const vals = state.months;
   if (!vals.some(v => v > 0)) return;
-
   const expenses = state.expenses || [];
   const profits = vals.map((rev, i) => Math.max(0, rev - (expenses[i] || 0)));
-  const expenseData = vals.map((rev, i) => -(expenses[i] || 0)); // negative for below x-axis
-
+  const expenseData = vals.map((rev, i) => -(expenses[i] || 0));
   const last = vals[vals.length-1];
   const trend = vals.length >= 3 ? (vals[vals.length-1] - vals[vals.length-3]) / Math.max(vals[vals.length-3],1) : 0;
   const forecast = Math.round(last * (1 + trend * 0.4));
   document.getElementById('forecastBadge').textContent = 'Next month forecast: $' + forecast.toLocaleString();
-
-  document.getElementById('revLegend').innerHTML = `
-    <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.85);box-shadow:0 0 6px rgba(59,130,246,0.4)"></div>Profit</div>
-    <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.7)"></div>Expenses</div>
-    <div class="legend-item"><div class="legend-dot" style="background:rgba(99,102,241,0.45)"></div>Forecast</div>`;
-
+  document.getElementById('revLegend').innerHTML = `<div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.85);box-shadow:0 0 6px rgba(59,130,246,0.4)"></div>Profit</div><div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.7)"></div>Expenses</div><div class="legend-item"><div class="legend-dot" style="background:rgba(99,102,241,0.45)"></div>Forecast</div>`;
   const forecastProfit = [...Array(vals.length).fill(null), forecast];
   forecastProfit[vals.length-1] = profits[profits.length-1];
-
   const now = new Date();
   const labels = [];
   for (let i = 7; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth()-i, 1); labels.push(MONTHS_LABELS[d.getMonth()]); }
   labels.push('Next*');
-
   revChartInst = new Chart(document.getElementById('revChart'), {
     type: 'bar',
     data: {
       labels: [...labels],
       datasets: [
-        {
-          label: 'Profit',
-          data: [...profits, forecastProfit[vals.length]],
-          backgroundColor: profits.map((_, i) => 'rgba(59,130,246,0.85)').concat(['rgba(99,102,241,0.45)']),
-          borderRadius: { topLeft: 5, topRight: 5 },
-          borderSkipped: 'bottom',
-          stack: 'stack'
-        },
-        {
-          label: 'Expenses',
-          data: [...expenseData, null],
-          backgroundColor: 'rgba(239,68,68,0.7)',
-          borderRadius: { bottomLeft: 5, bottomRight: 5 },
-          borderSkipped: 'top',
-          stack: 'stack'
-        }
+        { label: 'Profit', data: [...profits, forecastProfit[vals.length]], backgroundColor: profits.map(() => 'rgba(59,130,246,0.85)').concat(['rgba(99,102,241,0.45)']), borderRadius: { topLeft: 5, topRight: 5 }, borderSkipped: 'bottom', stack: 'stack' },
+        { label: 'Expenses', data: [...expenseData, null], backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: { bottomLeft: 5, bottomRight: 5 }, borderSkipped: 'top', stack: 'stack' }
       ]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { stacked: true, ticks: { color: '#5A6A85', font: { size: 11 } }, grid: { display: false }, border: { display: false } },
-        y: {
-          stacked: false,
-          ticks: { color: '#5A6A85', font: { size: 11 }, callback: v => '$' + (Math.abs(v) >= 1000 ? (v < 0 ? '-' : '') + Math.round(Math.abs(v)/1000) + 'k' : v) },
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          border: { display: false }
-        }
-      }
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { stacked: true, ticks: { color: '#5A6A85', font: { size: 11 } }, grid: { display: false }, border: { display: false } }, y: { stacked: false, ticks: { color: '#5A6A85', font: { size: 11 }, callback: v => '$' + (Math.abs(v) >= 1000 ? (v < 0 ? '-' : '') + Math.round(Math.abs(v)/1000) + 'k' : v) }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false } } } }
   });
-
-  // PIE CHART — total profit vs total expenses
   const totalProfit = profits.reduce((a,b) => a+b, 0);
   const totalExpenses = expenses.reduce((a,b) => a+b, 0);
   revPieChartInst = new Chart(document.getElementById('revPieChart'), {
     type: 'doughnut',
-    data: {
-      labels: ['Profit', 'Expenses'],
-      datasets: [{
-        data: [Math.max(0, totalProfit), Math.max(0, totalExpenses)],
-        backgroundColor: ['rgba(59,130,246,0.85)', 'rgba(239,68,68,0.7)'],
-        borderWidth: 0,
-        hoverOffset: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '60%',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` $${ctx.raw.toLocaleString()} (${Math.round(ctx.raw / (totalProfit + totalExpenses) * 100)}%)`
-          }
-        }
-      }
-    }
+    data: { labels: ['Profit', 'Expenses'], datasets: [{ data: [Math.max(0, totalProfit), Math.max(0, totalExpenses)], backgroundColor: ['rgba(59,130,246,0.85)', 'rgba(239,68,68,0.7)'], borderWidth: 0, hoverOffset: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toLocaleString()} (${Math.round(ctx.raw / (totalProfit + totalExpenses) * 100)}%)` } } } }
   });
 }
 
@@ -1082,39 +934,13 @@ function buildCategoryChart() {
   if (!cats.length) { document.getElementById('catChart').parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:var(--muted);font-size:13px;">No category data entered</div>'; return; }
   const colors = COLORS.slice(0, cats.length);
   document.getElementById('catLegend').innerHTML = cats.map((c,i) => `<div class="legend-item"><div class="legend-dot" style="background:${colors[i]}"></div>${c.name} ${c.pct}%</div>`).join('');
-  catChartInst = new Chart(document.getElementById('catChart'), {
-    type: 'doughnut',
-    data: { labels: cats.map(c=>c.name), datasets:[{data:cats.map(c=>c.pct),backgroundColor:colors,borderWidth:0,hoverOffset:4}] },
-    options: { responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{legend:{display:false}} }
-  });
+  catChartInst = new Chart(document.getElementById('catChart'), { type: 'doughnut', data: { labels: cats.map(c=>c.name), datasets:[{data:cats.map(c=>c.pct),backgroundColor:colors,borderWidth:0,hoverOffset:4}] }, options: { responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{legend:{display:false}} } });
 }
 
-// ─── AI ───────────────────────────────────────────────────────
 function buildPrompt() {
   const p = state.products.map(p => `  - ${p.name}: price $${p.price}, ${p.units} units/mo, cost $${p.cost}`).join('\n') || '  (none entered)';
   const cats = state.categories.map(c => `  ${c.name}: ${c.pct}%`).join('\n') || '  (none entered)';
-  return `You are a senior business analyst AI. Analyze this business and provide actionable intelligence.
-
-BUSINESS PROFILE:
-Name: ${state.bizName}
-Industry: ${state.industry || 'not specified'}
-Description: ${state.bizDesc || 'not provided'}
-Challenges: ${state.bizChallenges || 'not provided'}
-Time-consuming tasks they want automated: ${state.bizTimeWasters || 'not provided'}
-Goals: ${state.goals.join(', ') || 'not specified'}
-
-FINANCIAL DATA:
-Monthly revenue (oldest to newest): ${state.months.join(', ')}
-Products: ${p}
-Categories: ${cats}
-Extra context: ${state.extraContext || 'none'}
-
-Respond ONLY with raw JSON (no markdown):
-{
-  "analysis": "3-4 sentence overview",
-  "insights": [{"type":"positive|warning|info","text":"..."}],
-  "priceRecommendations": [{"product":"...","currentPrice":0,"suggestedPrice":0,"action":"raise|lower|hold","reason":"...","impact":"..."}]
-}`;
+  return `You are a senior business analyst AI. Analyze this business and provide actionable intelligence.\n\nBUSINESS PROFILE:\nName: ${state.bizName}\nIndustry: ${state.industry || 'not specified'}\nDescription: ${state.bizDesc || 'not provided'}\nChallenges: ${state.bizChallenges || 'not provided'}\nTime-consuming tasks they want automated: ${state.bizTimeWasters || 'not provided'}\nGoals: ${state.goals.join(', ') || 'not specified'}\n\nFINANCIAL DATA:\nMonthly revenue (oldest to newest): ${state.months.join(', ')}\nProducts:\n${p}\nCategories:\n${cats}\nExtra context: ${state.extraContext || 'none'}\n\nRespond ONLY with raw JSON (no markdown):\n{\n  "analysis": "3-4 sentence overview",\n  "insights": [{"type":"positive|warning|info","text":"..."}],\n  "priceRecommendations": [{"product":"...","currentPrice":0,"suggestedPrice":0,"action":"raise|lower|hold","reason":"...","impact":"..."}]\n}`;
 }
 
 async function runAI() {
@@ -1123,35 +949,15 @@ async function runAI() {
   document.getElementById('priceTableWrap').innerHTML = '<div class="ai-loading"><div class="spinner"></div> Calculating...</div>';
   document.getElementById('insightsList').innerHTML = '<div class="ai-loading"><div class="spinner"></div> Generating...</div>';
   try {
-    const res = await fetch(`${SERVER}/api/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, messages: [{ role: 'user', content: buildPrompt() }] })
-    });
+    const res = await fetch(`${SERVER}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint, messages: [{ role: 'user', content: buildPrompt() }] }) });
     if (res.status === 403) { handleStatus('revoked'); return; }
     const data = await res.json();
     const text = data.content.map(b => b.text||'').join('');
     let result;
-    try {
-      result = JSON.parse(text.replace(/```json|```/g,'').trim());
-    } catch(parseErr) {
-      console.error('JSON parse error:', parseErr, 'Raw text:', text);
-      document.getElementById('aiLoading').style.display = 'none';
-      document.getElementById('aiText').style.display = 'block';
-      document.getElementById('aiText').textContent = 'AI returned an unexpected response. Please try refreshing.';
-      document.getElementById('insightsList').innerHTML = '';
-      document.getElementById('priceTableWrap').innerHTML = '';
-      return;
-    }
+    try { result = JSON.parse(text.replace(/```json|```/g,'').trim()); }
+    catch(parseErr) { console.error('JSON parse error:', parseErr, 'Raw text:', text); document.getElementById('aiLoading').style.display = 'none'; document.getElementById('aiText').style.display = 'block'; document.getElementById('aiText').textContent = 'AI returned an unexpected response. Please try refreshing.'; document.getElementById('insightsList').innerHTML = ''; document.getElementById('priceTableWrap').innerHTML = ''; return; }
     renderAI(result);
-  } catch(e) {
-    console.error('runAI error:', e);
-    document.getElementById('aiLoading').style.display = 'none';
-    document.getElementById('aiText').style.display = 'block';
-    document.getElementById('aiText').textContent = 'Could not connect to AI server. Please try again.';
-    document.getElementById('insightsList').innerHTML = '';
-    document.getElementById('priceTableWrap').innerHTML = '';
-  }
+  } catch(e) { console.error('runAI error:', e); document.getElementById('aiLoading').style.display = 'none'; document.getElementById('aiText').style.display = 'block'; document.getElementById('aiText').textContent = 'Could not connect to AI server. Please try again.'; document.getElementById('insightsList').innerHTML = ''; document.getElementById('priceTableWrap').innerHTML = ''; }
 }
 
 function renderAI(result) {
@@ -1159,10 +965,7 @@ function renderAI(result) {
   document.getElementById('aiText').style.display = 'block';
   document.getElementById('aiText').textContent = result.analysis || '';
   const iconMap = { positive:{cls:'icon-green',sym:'↑'}, warning:{cls:'icon-amber',sym:'!'}, info:{cls:'icon-blue',sym:'→'} };
-  document.getElementById('insightsList').innerHTML = (result.insights||[]).map(ins => {
-    const ic = iconMap[ins.type]||iconMap.info;
-    return `<div class="insight-item"><div class="insight-icon ${ic.cls}">${ic.sym}</div><div>${ins.text}</div></div>`;
-  }).join('') || '<div style="color:var(--muted);font-size:13px;">No insights generated.</div>';
+  document.getElementById('insightsList').innerHTML = (result.insights||[]).map(ins => { const ic = iconMap[ins.type]||iconMap.info; return `<div class="insight-item"><div class="insight-icon ${ic.cls}">${ic.sym}</div><div>${ins.text}</div></div>`; }).join('') || '<div style="color:var(--muted);font-size:13px;">No insights generated.</div>';
   const recs = result.priceRecommendations||[];
   if (!recs.length) { document.getElementById('priceTableWrap').innerHTML = '<div style="color:var(--muted);font-size:13px;">Add products in step 2 to get price recommendations.</div>'; return; }
   document.getElementById('priceTableWrap').innerHTML = `<table class="price-tbl"><thead><tr><th>Product</th><th>Current</th><th>Suggested</th><th>Est. impact</th><th>Action</th></tr></thead><tbody>${recs.map(r=>`<tr><td><strong>${r.product}</strong><br><span style="color:var(--muted);font-size:11px;">${r.reason}</span></td><td style="font-family:'DM Mono',monospace;">$${r.currentPrice}</td><td style="font-family:'DM Mono',monospace;font-weight:500;">$${r.suggestedPrice}</td><td style="font-size:12px;color:var(--green);">${r.impact}</td><td><span class="badge ${r.action==='raise'?'badge-up':r.action==='lower'?'badge-down':'badge-hold'}">${r.action==='raise'?'Raise price':r.action==='lower'?'Lower price':'Optimal'}</span></td></tr>`).join('')}</tbody></table>`;
@@ -1170,133 +973,96 @@ function renderAI(result) {
 
 function refreshAI() { runAI(); }
 
-// ─── CLAUDE CHAT ───────────────────────────────────────────────
-let chatVisible = false;
+// ─── CHAT ─────────────────────────────────────────────────────
+let chatVisible = false, agentVisible = false, hitlistVisible = false;
 let chatHistory = [];
 
+function hideAll() {
+  document.getElementById('agentPage').style.display = 'none';
+  document.getElementById('chatPage').style.display = 'none';
+  document.getElementById('hitlistPage').style.display = 'none';
+  document.getElementById('page3').style.display = 'block';
+  document.getElementById('navAgentBtn').classList.remove('active');
+  document.getElementById('navChatBtn').classList.remove('active');
+  document.getElementById('navHitlistBtn').classList.remove('active');
+  agentVisible = false; chatVisible = false; hitlistVisible = false;
+}
+
 function toggleChat() {
-  // Close agent if open
-  if (agentVisible) {
-    agentVisible = false;
-    document.getElementById('agentPage').style.display = 'none';
-    document.getElementById('navAgentBtn').classList.remove('active');
-  }
-  chatVisible = !chatVisible;
-  document.getElementById('chatPage').style.display = chatVisible ? 'flex' : 'none';
-  document.getElementById('page3').style.display = chatVisible ? 'none' : 'block';
-  document.getElementById('navChatBtn').classList.toggle('active', chatVisible);
-  if (chatVisible) document.getElementById('chatInput').focus();
+  if (chatVisible) { hideAll(); return; }
+  hideAll();
+  chatVisible = true;
+  document.getElementById('chatPage').style.display = 'flex';
+  document.getElementById('page3').style.display = 'none';
+  document.getElementById('navChatBtn').classList.add('active');
+  document.getElementById('chatInput').focus();
+}
+
+function toggleAgent() {
+  if (agentVisible) { hideAll(); return; }
+  hideAll();
+  agentVisible = true;
+  document.getElementById('agentPage').style.display = 'block';
+  document.getElementById('page3').style.display = 'none';
+  document.getElementById('navAgentBtn').classList.add('active');
+  checkGoogleStatus(); checkSMSStatus();
+}
+
+function toggleHitlist() {
+  if (hitlistVisible) { hideAll(); return; }
+  hideAll();
+  hitlistVisible = true;
+  document.getElementById('hitlistPage').style.display = 'flex';
+  document.getElementById('page3').style.display = 'none';
+  document.getElementById('navHitlistBtn').classList.add('active');
 }
 
 async function sendChatMessage() {
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   if (!text) return;
-
-  input.value = '';
-  input.style.height = 'auto';
-
+  input.value = ''; input.style.height = 'auto';
   addChatMessage('user', text);
   chatHistory.push({ role: 'user', content: text });
-
   const btn = document.getElementById('chatSendBtn');
-  btn.disabled = true;
-  btn.textContent = '...';
-
-  // Create AI message bubble that we'll stream into
+  btn.disabled = true; btn.textContent = '...';
   const messages = document.getElementById('chatMessages');
-  const aiMsg = document.createElement('div');
-  aiMsg.className = 'chat-msg ai';
-  const bubble = document.createElement('div');
-  bubble.className = 'chat-msg-bubble';
+  const aiMsg = document.createElement('div'); aiMsg.className = 'chat-msg ai';
+  const bubble = document.createElement('div'); bubble.className = 'chat-msg-bubble';
   bubble.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;"></div>';
-  aiMsg.appendChild(bubble);
-  messages.appendChild(aiMsg);
-  messages.scrollTop = messages.scrollHeight;
-
+  aiMsg.appendChild(bubble); messages.appendChild(aiMsg); messages.scrollTop = messages.scrollHeight;
   try {
     const businessContext = state.bizName ? `The user's business: ${state.bizName}, ${state.industry}, ${state.bizDesc}` : '';
-    const res = await fetch(`${SERVER}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, messages: chatHistory, businessContext })
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      bubble.textContent = `Sorry, something went wrong: ${err.error}`;
-      btn.disabled = false; btn.textContent = 'Send'; return;
-    }
-
-    // Read the stream
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-    bubble.innerHTML = '';
-
+    const res = await fetch(`${SERVER}/api/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint, messages: chatHistory, businessContext }) });
+    if (!res.ok) { const err = await res.json(); bubble.textContent = `Sorry, something went wrong: ${err.error}`; btn.disabled = false; btn.textContent = 'Send'; return; }
+    const reader = res.body.getReader(); const decoder = new TextDecoder(); let fullText = ''; bubble.innerHTML = '';
     while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      const { done, value } = await reader.read(); if (done) break;
       const chunk = decoder.decode(value);
       const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
       for (const line of lines) {
-        const data = line.slice(6);
-        if (data === '[DONE]') continue;
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed.text) {
-            fullText += parsed.text;
-            bubble.innerHTML = fullText.replace(/\n/g, '<br>');
-            messages.scrollTop = messages.scrollHeight;
-          }
-        } catch(e) {}
+        const data = line.slice(6); if (data === '[DONE]') continue;
+        try { const parsed = JSON.parse(data); if (parsed.text) { fullText += parsed.text; bubble.innerHTML = fullText.replace(/\n/g, '<br>'); messages.scrollTop = messages.scrollHeight; } } catch(e) {}
       }
     }
-
     chatHistory.push({ role: 'assistant', content: fullText });
-  } catch(e) {
-    bubble.textContent = 'Could not connect to the server. Please try again.';
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Send';
+  } catch(e) { bubble.textContent = 'Could not connect to the server. Please try again.'; }
+  btn.disabled = false; btn.textContent = 'Send';
 }
 
 function addChatMessage(role, text) {
   const messages = document.getElementById('chatMessages');
-  const msg = document.createElement('div');
-  msg.className = `chat-msg ${role}`;
+  const msg = document.createElement('div'); msg.className = `chat-msg ${role}`;
   msg.innerHTML = `<div class="chat-msg-bubble">${text.replace(/\n/g,'<br>')}</div>`;
-  messages.appendChild(msg);
-  messages.scrollTop = messages.scrollHeight;
+  messages.appendChild(msg); messages.scrollTop = messages.scrollHeight;
 }
 
-// ─── AI AGENT ─────────────────────────────────────────────────
-let agentVisible = false;
-let agentChatHistory = [];
+// ─── GOOGLE ───────────────────────────────────────────────────
 let googleConnected = false;
-
-function toggleAgent() {
-  // Close chat if open
-  if (chatVisible) {
-    chatVisible = false;
-    document.getElementById('chatPage').style.display = 'none';
-    document.getElementById('navChatBtn').classList.remove('active');
-  }
-  agentVisible = !agentVisible;
-  document.getElementById('agentPage').style.display = agentVisible ? 'block' : 'none';
-  document.getElementById('page3').style.display = agentVisible ? 'none' : 'block';
-  document.getElementById('navAgentBtn').classList.toggle('active', agentVisible);
-  if (agentVisible) checkGoogleStatus();
-}
 
 async function checkGoogleStatus() {
   try {
-    const res = await fetch(`${SERVER}/api/google/status`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint })
-    });
+    const res = await fetch(`${SERVER}/api/google/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint }) });
     const data = await res.json();
     googleConnected = data.connected;
     document.getElementById('googleDot').className = 'status-dot' + (data.connected ? ' connected' : '');
@@ -1309,163 +1075,113 @@ function connectGoogle() {
   const url = `${SERVER}/auth/google?fingerprint=${fingerprint}`;
   const popup = window.open(url, 'google_auth', 'width=500,height=600,left=200,top=100');
   window.addEventListener('message', async (e) => {
-    if (e.data?.type === 'google_auth_success') {
-      googleConnected = true;
-      await checkGoogleStatus();
-      addAgentMessage('ai', '✅ Google account connected! I can now send emails and create calendar events for you.');
-    } else if (e.data?.type === 'google_auth_error') {
-      addAgentMessage('ai', `❌ Could not connect Google: ${e.data.error}`);
-    }
+    if (e.data?.type === 'google_auth_success') { googleConnected = true; await checkGoogleStatus(); addAgentMessage('ai', '✅ Google account connected! I can now send emails and create calendar events for you.'); }
+    else if (e.data?.type === 'google_auth_error') { addAgentMessage('ai', `❌ Could not connect Google: ${e.data.error}`); }
   }, { once: true });
 }
 
-function quickAction(prompt) {
-  document.getElementById('agentInput').value = prompt;
-  sendAgentMessage();
+// ─── SMS / TWILIO ─────────────────────────────────────────────
+let smsConnected = false;
+
+async function checkSMSStatus() {
+  try {
+    const res = await fetch(`${SERVER}/api/twilio/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint }) });
+    const data = await res.json();
+    smsConnected = data.connected;
+    document.getElementById('smsDot').className = 'status-dot' + (data.connected ? ' connected' : '');
+    document.getElementById('smsStatusText').textContent = data.connected ? `Connected: ${data.phoneNumber}` : 'Not connected';
+    document.getElementById('smsConnectForm').style.display = data.connected ? 'none' : 'block';
+  } catch(e) {}
 }
+
+async function connectSMS() {
+  const phone = document.getElementById('smsPhoneInput').value.trim();
+  const errEl = document.getElementById('smsError');
+  if (!phone) { errEl.textContent = 'Please enter a phone number.'; return; }
+  errEl.textContent = '';
+  try {
+    const res = await fetch(`${SERVER}/api/twilio/connect`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint, phoneNumber: phone }) });
+    const data = await res.json();
+    if (data.ok) { await checkSMSStatus(); addAgentMessage('ai', `✅ Phone number connected! You should receive a confirmation text at ${data.phoneNumber}. I can now send SMS to your clients.`); }
+    else { errEl.textContent = data.error || 'Could not connect phone number.'; }
+  } catch(e) { errEl.textContent = 'Server error. Please try again.'; }
+}
+
+// ─── AGENT ────────────────────────────────────────────────────
+let agentChatHistory = [];
+
+function quickAction(prompt) { document.getElementById('agentInput').value = prompt; sendAgentMessage(); }
 
 function addAgentMessage(role, text, draft) {
   const messages = document.getElementById('agentMessages');
-  const msg = document.createElement('div');
-  msg.className = `agent-msg ${role}`;
-
+  const msg = document.createElement('div'); msg.className = `agent-msg ${role}`;
   let html = `<div class="agent-msg-bubble">${text.replace(/\n/g,'<br>')}</div>`;
-
   if (draft && draft.type !== 'none') {
     if (draft.type === 'email' && draft.email) {
-      html += `<div class="draft-card">
-        <div class="draft-card-title">✉️ Email draft</div>
-        <div class="draft-field"><label>To</label><input type="text" id="draftTo" value="${draft.email.to || ''}" /></div>
-        <div class="draft-field"><label>Subject</label><input type="text" id="draftSubject" value="${draft.email.subject || ''}" /></div>
-        <div class="draft-field"><label>Message</label><textarea id="draftBody">${draft.email.body || ''}</textarea></div>
-        <div class="draft-actions">
-          <button class="draft-send-btn" onclick="sendEmail()">Send via Gmail</button>
-          <button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button>
-        </div>
-        <div id="emailResult"></div>
-      </div>`;
+      html += `<div class="draft-card"><div class="draft-card-title">✉️ Email draft</div><div class="draft-field"><label>To</label><input type="text" id="draftTo" value="${draft.email.to || ''}" /></div><div class="draft-field"><label>Subject</label><input type="text" id="draftSubject" value="${draft.email.subject || ''}" /></div><div class="draft-field"><label>Message</label><textarea id="draftBody">${draft.email.body || ''}</textarea></div><div class="draft-actions"><button class="draft-send-btn" onclick="sendEmail()">Send via Gmail</button><button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button></div><div id="emailResult"></div></div>`;
+    } else if (draft.type === 'sms' && draft.sms) {
+      html += `<div class="draft-card"><div class="draft-card-title">💬 SMS draft</div><div class="draft-field"><label>To (phone number)</label><input type="text" id="draftSmsTo" value="${draft.sms.to || ''}" /></div><div class="draft-field"><label>Message</label><textarea id="draftSmsBody">${draft.sms.body || ''}</textarea></div><div class="draft-actions"><button class="draft-send-btn" onclick="sendSMS()">Send SMS</button><button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button></div><div id="smsResult"></div></div>`;
     } else if (draft.type === 'calendar' && draft.calendar) {
-      html += `<div class="draft-card">
-        <div class="draft-card-title">📅 Calendar event</div>
-        <div class="draft-field"><label>Title</label><input type="text" id="draftTitle" value="${draft.calendar.title || ''}" /></div>
-        <div class="draft-field"><label>Description</label><textarea id="draftDesc">${draft.calendar.description || ''}</textarea></div>
-        <div class="form-row" style="gap:8px;margin-bottom:10px;">
-          <div class="draft-field" style="margin:0;"><label>Start</label><input type="datetime-local" id="draftStart" value="${draft.calendar.start?.slice(0,16) || ''}" /></div>
-          <div class="draft-field" style="margin:0;"><label>End</label><input type="datetime-local" id="draftEnd" value="${draft.calendar.end?.slice(0,16) || ''}" /></div>
-        </div>
-        <div class="draft-field"><label>Attendees <span style="font-weight:400;">(comma separated emails)</span></label><input type="text" id="draftAttendees" value="${(draft.calendar.attendees||[]).join(', ')}" /></div>
-        <div class="draft-actions">
-          <button class="draft-send-btn" onclick="createCalendarEvent()">Add to Google Calendar</button>
-          <button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button>
-        </div>
-        <div id="calResult"></div>
-      </div>`;
+      html += `<div class="draft-card"><div class="draft-card-title">📅 Calendar event</div><div class="draft-field"><label>Title</label><input type="text" id="draftTitle" value="${draft.calendar.title || ''}" /></div><div class="draft-field"><label>Description</label><textarea id="draftDesc">${draft.calendar.description || ''}</textarea></div><div class="form-row" style="gap:8px;margin-bottom:10px;"><div class="draft-field" style="margin:0;"><label>Start</label><input type="datetime-local" id="draftStart" value="${draft.calendar.start?.slice(0,16) || ''}" /></div><div class="draft-field" style="margin:0;"><label>End</label><input type="datetime-local" id="draftEnd" value="${draft.calendar.end?.slice(0,16) || ''}" /></div></div><div class="draft-field"><label>Attendees <span style="font-weight:400;">(comma separated emails)</span></label><input type="text" id="draftAttendees" value="${(draft.calendar.attendees||[]).join(', ')}" /></div><div class="draft-actions"><button class="draft-send-btn" onclick="createCalendarEvent()">Add to Google Calendar</button><button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button></div><div id="calResult"></div></div>`;
     } else if (draft.type === 'invoice' && draft.invoice) {
       const items = draft.invoice.items || [];
-      html += `<div class="draft-card">
-        <div class="draft-card-title">🧾 Invoice</div>
-        <div class="draft-field"><label>Client</label><input type="text" id="draftClient" value="${draft.invoice.client || ''}" /></div>
-        <table class="invoice-table">
-          <thead><tr><th>Description</th><th>Amount</th></tr></thead>
-          <tbody>${items.map(i => `<tr><td>${i.description}</td><td>$${i.amount}</td></tr>`).join('')}</tbody>
-        </table>
-        <div class="invoice-total">Total: $${draft.invoice.total || 0}</div>
-        <div class="draft-field" style="margin-top:10px;"><label>Due date</label><input type="date" id="draftDue" value="${draft.invoice.dueDate || ''}" /></div>
-        <div class="draft-actions">
-          <button class="draft-send-btn" onclick="sendInvoiceEmail()">Send as Email</button>
-          <button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button>
-        </div>
-        <div id="invoiceResult"></div>
-      </div>`;
+      html += `<div class="draft-card"><div class="draft-card-title">🧾 Invoice</div><div class="draft-field"><label>Client</label><input type="text" id="draftClient" value="${draft.invoice.client || ''}" /></div><table class="invoice-table"><thead><tr><th>Description</th><th>Amount</th></tr></thead><tbody>${items.map(i => `<tr><td>${i.description}</td><td>$${i.amount}</td></tr>`).join('')}</tbody></table><div class="invoice-total">Total: $${draft.invoice.total || 0}</div><div class="draft-field" style="margin-top:10px;"><label>Due date</label><input type="date" id="draftDue" value="${draft.invoice.dueDate || ''}" /></div><div class="draft-actions"><button class="draft-send-btn" onclick="sendInvoiceEmail()">Send as Email</button><button class="draft-discard-btn" onclick="this.closest('.draft-card').remove()">Discard</button></div><div id="invoiceResult"></div></div>`;
     }
   }
-
-  msg.innerHTML = html;
-  messages.appendChild(msg);
-  messages.scrollTop = messages.scrollHeight;
+  msg.innerHTML = html; messages.appendChild(msg); messages.scrollTop = messages.scrollHeight;
 }
 
 async function sendAgentMessage() {
   const input = document.getElementById('agentInput');
-  const text = input.value.trim();
-  if (!text) return;
-
-  input.value = '';
-  addAgentMessage('user', text);
-
+  const text = input.value.trim(); if (!text) return;
+  input.value = ''; addAgentMessage('user', text);
   agentChatHistory.push({ role: 'user', content: text });
-
-  const btn = document.getElementById('agentSendBtn');
-  btn.disabled = true;
-  btn.textContent = '...';
-
-  // Show typing indicator
-  const typing = document.createElement('div');
-  typing.className = 'agent-msg ai';
-  typing.id = 'typingIndicator';
+  const btn = document.getElementById('agentSendBtn'); btn.disabled = true; btn.textContent = '...';
+  const typing = document.createElement('div'); typing.className = 'agent-msg ai'; typing.id = 'typingIndicator';
   typing.innerHTML = '<div class="agent-msg-bubble"><div class="spinner" style="width:14px;height:14px;border-width:2px;"></div></div>';
-  document.getElementById('agentMessages').appendChild(typing);
-  document.getElementById('agentMessages').scrollTop = 99999;
-
+  document.getElementById('agentMessages').appendChild(typing); document.getElementById('agentMessages').scrollTop = 99999;
   try {
     const businessContext = `Name: ${state.bizName}, Industry: ${state.industry}, Description: ${state.bizDesc}, Products: ${state.products.map(p=>p.name).join(', ')}`;
-    const res = await fetch(`${SERVER}/api/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, messages: agentChatHistory, businessContext })
-    });
-    const data = await res.json();
-    typing.remove();
-
-    if (data.error) {
-      addAgentMessage('ai', `Sorry, something went wrong: ${data.error}`);
-    } else {
-      agentChatHistory.push({ role: 'assistant', content: data.message });
-      addAgentMessage('ai', data.message, data.draft);
-    }
-  } catch(e) {
-    typing.remove();
-    addAgentMessage('ai', 'Sorry, I could not connect to the server. Please try again.');
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Send';
+    const res = await fetch(`${SERVER}/api/agent`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint, messages: agentChatHistory, businessContext }) });
+    const data = await res.json(); typing.remove();
+    if (data.error) { addAgentMessage('ai', `Sorry, something went wrong: ${data.error}`); }
+    else { agentChatHistory.push({ role: 'assistant', content: data.message }); addAgentMessage('ai', data.message, data.draft); }
+  } catch(e) { typing.remove(); addAgentMessage('ai', 'Sorry, I could not connect to the server. Please try again.'); }
+  btn.disabled = false; btn.textContent = 'Send';
 }
 
 async function sendEmail() {
   if (!googleConnected) { alert('Please connect your Google account first.'); return; }
-  const to = document.getElementById('draftTo').value;
-  const subject = document.getElementById('draftSubject').value;
-  const body = document.getElementById('draftBody').value;
-  const result = document.getElementById('emailResult');
-  result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Sending...</div>';
+  const to = document.getElementById('draftTo').value, subject = document.getElementById('draftSubject').value, body = document.getElementById('draftBody').value;
+  const result = document.getElementById('emailResult'); result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Sending...</div>';
   try {
-    const res = await fetch(`${SERVER}/api/gmail/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, to, subject, body })
-    });
+    const res = await fetch(`${SERVER}/api/gmail/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint, to, subject, body }) });
     const data = await res.json();
     if (data.ok) result.innerHTML = '<div class="success-msg">✓ Email sent successfully!</div>';
     else result.innerHTML = `<div class="error-msg-agent">Error: ${data.error}</div>`;
   } catch(e) { result.innerHTML = '<div class="error-msg-agent">Failed to send email.</div>'; }
 }
 
+async function sendSMS() {
+  if (!smsConnected) { alert('Please connect your phone number first.'); return; }
+  const to = document.getElementById('draftSmsTo').value, body = document.getElementById('draftSmsBody').value;
+  const result = document.getElementById('smsResult'); result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Sending...</div>';
+  try {
+    const res = await fetch(`${SERVER}/api/twilio/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint, to, body }) });
+    const data = await res.json();
+    if (data.ok) result.innerHTML = '<div class="success-msg">✓ SMS sent successfully!</div>';
+    else result.innerHTML = `<div class="error-msg-agent">Error: ${data.error}</div>`;
+  } catch(e) { result.innerHTML = '<div class="error-msg-agent">Failed to send SMS.</div>'; }
+}
+
 async function createCalendarEvent() {
   if (!googleConnected) { alert('Please connect your Google account first.'); return; }
-  const title = document.getElementById('draftTitle').value;
-  const description = document.getElementById('draftDesc').value;
-  const start = document.getElementById('draftStart').value;
-  const end = document.getElementById('draftEnd').value;
+  const title = document.getElementById('draftTitle').value, description = document.getElementById('draftDesc').value;
+  const start = document.getElementById('draftStart').value, end = document.getElementById('draftEnd').value;
   const attendees = document.getElementById('draftAttendees').value.split(',').map(e=>e.trim()).filter(Boolean);
-  const result = document.getElementById('calResult');
-  result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Creating event...</div>';
+  const result = document.getElementById('calResult'); result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Creating event...</div>';
   try {
-    const res = await fetch(`${SERVER}/api/calendar/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, title, description, start: new Date(start).toISOString(), end: new Date(end).toISOString(), attendees })
-    });
+    const res = await fetch(`${SERVER}/api/calendar/create`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint, title, description, start: new Date(start).toISOString(), end: new Date(end).toISOString(), attendees }) });
     const data = await res.json();
     if (data.ok) result.innerHTML = `<div class="success-msg">✓ Event created! <a href="${data.link}" target="_blank" style="color:var(--green);">View in Calendar</a></div>`;
     else result.innerHTML = `<div class="error-msg-agent">Error: ${data.error}</div>`;
@@ -1474,21 +1190,112 @@ async function createCalendarEvent() {
 
 async function sendInvoiceEmail() {
   if (!googleConnected) { alert('Please connect your Google account first.'); return; }
-  const client = document.getElementById('draftClient').value;
-  const due = document.getElementById('draftDue').value;
-  const result = document.getElementById('invoiceResult');
-  result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Sending...</div>';
-  const body = `Dear ${client},\n\nPlease find your invoice attached below.\n\nDue date: ${due}\n\nThank you for your business!\n\n${state.bizName}`;
+  const client = document.getElementById('draftClient').value, due = document.getElementById('draftDue').value;
+  const result = document.getElementById('invoiceResult'); result.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Sending...</div>';
+  const body = `Dear ${client},\n\nPlease find your invoice below.\n\nDue date: ${due}\n\nThank you!\n\n${state.bizName}`;
   try {
-    const res = await fetch(`${SERVER}/api/gmail/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, to: client, subject: `Invoice from ${state.bizName}`, body })
-    });
+    const res = await fetch(`${SERVER}/api/gmail/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint, to: client, subject: `Invoice from ${state.bizName}`, body }) });
     const data = await res.json();
     if (data.ok) result.innerHTML = '<div class="success-msg">✓ Invoice sent!</div>';
     else result.innerHTML = `<div class="error-msg-agent">Error: ${data.error}</div>`;
   } catch(e) { result.innerHTML = '<div class="error-msg-agent">Failed to send invoice.</div>'; }
+}
+
+// ─── HIT LIST ─────────────────────────────────────────────────
+let hitlistTasks = [];
+
+function loadHitlist() {
+  try { const raw = localStorage.getItem('clarityai_hitlist'); if (raw) hitlistTasks = JSON.parse(raw); } catch(e) { hitlistTasks = []; }
+  renderHitlist();
+}
+
+function saveHitlist() {
+  try { localStorage.setItem('clarityai_hitlist', JSON.stringify(hitlistTasks)); } catch(e) {}
+}
+
+function renderHitlist() {
+  const body = document.getElementById('hitlistBody');
+  const empty = document.getElementById('hitlistEmpty');
+  const active = hitlistTasks.filter(t => !t.done);
+  const done = hitlistTasks.filter(t => t.done);
+  if (!hitlistTasks.length) { empty.style.display = 'block'; body.innerHTML = ''; body.appendChild(empty); return; }
+  empty.style.display = 'none';
+  const catColors = { urgent: 'cat-urgent', 'follow-up': 'cat-follow-up', admin: 'cat-admin', growth: 'cat-growth', personal: 'cat-personal' };
+  let html = '';
+  if (active.length) {
+    html += `<div class="hitlist-section-label">To do (${active.length})</div>`;
+    html += active.map(t => `
+      <div class="task-item${t.done ? ' done' : ''}" id="task_${t.id}">
+        <div class="task-checkbox${t.done ? ' checked' : ''}" onclick="toggleTask('${t.id}')"></div>
+        <div class="task-content">
+          <div class="task-text">${escHtml(t.text)}</div>
+          <div class="task-meta">
+            ${t.category ? `<span class="task-category ${catColors[t.category] || 'cat-personal'}">${t.category}</span>` : ''}
+            ${t.aiNote ? `<span class="task-ai-note">✦ ${escHtml(t.aiNote)}</span>` : ''}
+          </div>
+        </div>
+        <button class="task-delete" onclick="deleteTask('${t.id}')">×</button>
+      </div>`).join('');
+  }
+  if (done.length) {
+    html += `<div class="hitlist-section-label" style="margin-top:1.5rem;">Done (${done.length})</div>`;
+    html += done.map(t => `
+      <div class="task-item done" id="task_${t.id}">
+        <div class="task-checkbox checked" onclick="toggleTask('${t.id}')"></div>
+        <div class="task-content"><div class="task-text">${escHtml(t.text)}</div></div>
+        <button class="task-delete" onclick="deleteTask('${t.id}')">×</button>
+      </div>`).join('');
+  }
+  body.innerHTML = html;
+}
+
+function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function addTask() {
+  const input = document.getElementById('hitlistInput');
+  const text = input.value.trim(); if (!text) return;
+  input.value = '';
+  const id = Date.now().toString();
+  hitlistTasks.push({ id, text, done: false, category: null, aiNote: null, priority: 99 });
+  saveHitlist(); renderHitlist();
+  // Organize with AI in background
+  organizeWithAI();
+}
+
+async function organizeWithAI() {
+  const activeTasks = hitlistTasks.filter(t => !t.done && !t.category);
+  if (!activeTasks.length) return;
+  try {
+    const businessContext = state.bizName ? `${state.bizName}, ${state.industry}` : 'small business';
+    const res = await fetch(`${SERVER}/api/hitlist/organize`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fingerprint, tasks: activeTasks.map(t => t.text), businessContext })
+    });
+    const data = await res.json();
+    if (data.tasks?.length) {
+      data.tasks.forEach((aiTask, i) => {
+        const match = hitlistTasks.find(t => t.text === activeTasks[i]?.text);
+        if (match) { match.category = aiTask.category; match.aiNote = aiTask.aiNote || null; match.priority = aiTask.priority || 99; }
+      });
+      hitlistTasks.sort((a, b) => { if (a.done !== b.done) return a.done ? 1 : -1; return (a.priority || 99) - (b.priority || 99); });
+      saveHitlist(); renderHitlist();
+    }
+  } catch(e) {}
+}
+
+function toggleTask(id) {
+  const task = hitlistTasks.find(t => t.id === id);
+  if (task) { task.done = !task.done; saveHitlist(); renderHitlist(); }
+}
+
+function deleteTask(id) {
+  hitlistTasks = hitlistTasks.filter(t => t.id !== id);
+  saveHitlist(); renderHitlist();
+}
+
+function clearDoneTasks() {
+  hitlistTasks = hitlistTasks.filter(t => !t.done);
+  saveHitlist(); renderHitlist();
 }
 
 init();
