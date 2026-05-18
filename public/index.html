@@ -366,8 +366,11 @@
       <div class="step-subtitle">Add as much or as little as you have. Estimates are fine.</div>
     </div>
     <div class="card">
-      <div class="card-title">Monthly revenue (last 8 months)</div>
-      <div id="monthInputs" class="month-grid"></div>
+      <div class="card-title">Monthly revenue & expenses (last 8 months)</div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Revenue</div>
+      <div id="monthInputs" class="month-grid" style="margin-bottom:14px;"></div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Expenses</div>
+      <div id="monthExpenseInputs" class="month-grid"></div>
     </div>
     <div class="card">
       <div class="card-title">Products / services</div>
@@ -700,7 +703,7 @@ async function checkStatus() {
 // ─── STATE & NAV ──────────────────────────────────────────────
 const MONTHS_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#F97316','#EC4899'];
-let state = { bizName:'', industry:'', bizDesc:'', bizChallenges:'', bizTimeWasters:'', goals:[], extraContext:'', months:[], products:[], categories:[] };
+let state = { bizName:'', industry:'', bizDesc:'', bizChallenges:'', bizTimeWasters:'', goals:[], extraContext:'', months:[], expenses:[], products:[], categories:[] };
 let revChartInst = null, catChartInst = null;
 
 function showPage(n) {
@@ -804,6 +807,12 @@ function init() {
         if (saved.months[i]) inp.value = saved.months[i];
       });
     }
+    // Restore expenses
+    if (saved.expenses?.length) {
+      document.querySelectorAll('.month-exp-val').forEach((inp, i) => {
+        if (saved.expenses[i]) inp.value = saved.expenses[i];
+      });
+    }
     // Restore products
     if (saved.products?.length) {
       document.getElementById('productRows').innerHTML = '';
@@ -835,15 +844,21 @@ function init() {
 
 function buildMonthInputs() {
   const now = new Date();
-  const wrap = document.getElementById('monthInputs');
-  wrap.innerHTML = '';
+  const revWrap = document.getElementById('monthInputs');
+  const expWrap = document.getElementById('monthExpenseInputs');
+  revWrap.innerHTML = '';
+  expWrap.innerHTML = '';
   for (let i = 7; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const label = MONTHS_LABELS[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2);
-    const div = document.createElement('div');
-    div.className = 'month-cell';
-    div.innerHTML = `<label>${label}</label><input type="number" placeholder="0" min="0" step="100" class="month-val" />`;
-    wrap.appendChild(div);
+    const revDiv = document.createElement('div');
+    revDiv.className = 'month-cell';
+    revDiv.innerHTML = `<label>${label}</label><input type="number" placeholder="0" min="0" step="100" class="month-val" />`;
+    revWrap.appendChild(revDiv);
+    const expDiv = document.createElement('div');
+    expDiv.className = 'month-cell';
+    expDiv.innerHTML = `<label>${label}</label><input type="number" placeholder="0" min="0" step="100" class="month-exp-val" />`;
+    expWrap.appendChild(expDiv);
   }
 }
 
@@ -884,6 +899,7 @@ function collectState() {
   state.extraContext = document.getElementById('extraContext').value.trim();
   state.goals = [...document.querySelectorAll('#goalTags .tag.selected')].map(t => t.textContent);
   state.months = [...document.querySelectorAll('.month-val')].map(i => parseFloat(i.value) || 0);
+  state.expenses = [...document.querySelectorAll('.month-exp-val')].map(i => parseFloat(i.value) || 0);
   state.products = [...document.querySelectorAll('.product-row')].map(r => ({
     name: r.querySelector('.prod-name').value.trim(),
     price: parseFloat(r.querySelector('.prod-price').value) || 0,
@@ -917,15 +933,18 @@ function buildMetrics() {
   const last = months[months.length-1] || 0;
   const prev = months[months.length-2] || 0;
   const revDelta = prev ? Math.round((last - prev) / prev * 100) : null;
+  const lastExp = (state.expenses || [])[months.length-1] || 0;
+  const profit = last - lastExp;
+  const margin = last > 0 ? Math.round((profit / last) * 100) : null;
   const totalUnits = state.products.reduce((s,p) => s + p.units, 0);
   const avgPrice = state.products.length ? state.products.reduce((s,p) => s + p.price, 0) / state.products.length : 0;
   const margins = state.products.filter(p => p.price > 0).map(p => (p.price - p.cost) / p.price);
   const avgMargin = margins.length ? Math.round(margins.reduce((a,b) => a+b,0) / margins.length * 100) : null;
   const metrics = [
     { label: 'This month revenue', value: last ? '$' + last.toLocaleString() : '—', delta: revDelta !== null ? (revDelta >= 0 ? '+' : '') + revDelta + '%' : null, up: revDelta >= 0 },
-    { label: 'Monthly units sold', value: totalUnits ? totalUnits.toLocaleString() : '—' },
-    { label: 'Avg product price', value: avgPrice ? '$' + avgPrice.toFixed(2) : '—' },
-    { label: 'Avg gross margin', value: avgMargin !== null ? avgMargin + '%' : '—' }
+    { label: 'This month profit', value: profit ? '$' + profit.toLocaleString() : '—' },
+    { label: 'Net margin', value: margin !== null ? margin + '%' : '—' },
+    { label: 'Monthly units sold', value: totalUnits ? totalUnits.toLocaleString() : '—' }
   ];
   document.getElementById('metricsStrip').innerHTML = metrics.map(m => `
     <div class="metric-card">
@@ -939,21 +958,69 @@ function buildRevenueChart() {
   if (revChartInst) revChartInst.destroy();
   const vals = state.months;
   if (!vals.some(v => v > 0)) return;
+
+  const expenses = state.expenses || [];
+  const profits = vals.map((rev, i) => Math.max(0, rev - (expenses[i] || 0)));
+  const expenseData = vals.map((rev, i) => Math.min(expenses[i] || 0, rev));
+
   const last = vals[vals.length-1];
   const trend = vals.length >= 3 ? (vals[vals.length-1] - vals[vals.length-3]) / Math.max(vals[vals.length-3],1) : 0;
   const forecast = Math.round(last * (1 + trend * 0.4));
   document.getElementById('forecastBadge').textContent = 'Next month forecast: $' + forecast.toLocaleString();
+
   const now = new Date();
   const labels = [];
   for (let i = 7; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth()-i, 1); labels.push(MONTHS_LABELS[d.getMonth()]); }
   labels.push('Next*');
-  const forecastData = [...Array(vals.length).fill(null), forecast];
-  forecastData[vals.length-1] = last;
-  document.getElementById('revLegend').innerHTML = `<div class="legend-item"><div class="legend-dot" style="background:#3B82F6;box-shadow:0 0 6px rgba(59,130,246,0.5)"></div>Actual</div><div class="legend-item"><div class="legend-dot" style="background:#6366F1;opacity:0.7"></div>Forecast</div>`;
+
+  const forecastProfit = [...Array(vals.length).fill(null), forecast];
+  forecastProfit[vals.length-1] = profits[profits.length-1];
+
+  document.getElementById('revLegend').innerHTML = `
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.85);box-shadow:0 0 6px rgba(59,130,246,0.4)"></div>Profit</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.6)"></div>Expenses</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(99,102,241,0.45)"></div>Forecast</div>`;
+
   revChartInst = new Chart(document.getElementById('revChart'), {
     type: 'bar',
-    data: { labels, datasets: [{ label:'Actual', data:[...vals,null], backgroundColor:'rgba(59,130,246,0.85)', borderRadius:5, borderSkipped:false }, { label:'Forecast', data:forecastData, backgroundColor:'rgba(99,102,241,0.45)', borderRadius:5, borderSkipped:false }] },
-    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#5A6A85',font:{size:11}},grid:{display:false},border:{display:false}}, y:{ticks:{color:'#5A6A85',font:{size:11},callback:v=>'$'+(v>=1000?Math.round(v/1000)+'k':v)},grid:{color:'rgba(255,255,255,0.04)'},border:{display:false}} } }
+    data: {
+      labels: [...labels],
+      datasets: [
+        {
+          label: 'Profit',
+          data: [...profits, null],
+          backgroundColor: 'rgba(59,130,246,0.85)',
+          borderRadius: { topLeft: 5, topRight: 5 },
+          borderSkipped: false,
+          stack: 'actual'
+        },
+        {
+          label: 'Expenses',
+          data: [...expenseData, null],
+          backgroundColor: 'rgba(239,68,68,0.6)',
+          borderRadius: 0,
+          borderSkipped: false,
+          stack: 'actual'
+        },
+        {
+          label: 'Forecast',
+          data: forecastProfit,
+          backgroundColor: 'rgba(99,102,241,0.45)',
+          borderRadius: { topLeft: 5, topRight: 5 },
+          borderSkipped: false,
+          stack: 'forecast'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#5A6A85', font: { size: 11 } }, grid: { display: false }, border: { display: false }, stacked: true },
+        y: { ticks: { color: '#5A6A85', font: { size: 11 }, callback: v => '$' + (v >= 1000 ? Math.round(v/1000) + 'k' : v) }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, stacked: true }
+      }
+    }
   });
 }
 
