@@ -994,14 +994,6 @@ function buildRevenueChart() {
   const forecast = Math.round(last * (1 + trend * 0.4));
   document.getElementById('forecastBadge').textContent = 'Next month forecast: $' + forecast.toLocaleString();
 
-  const now = new Date();
-  const labels = [];
-  for (let i = 7; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth()-i, 1); labels.push(MONTHS_LABELS[d.getMonth()]); }
-  labels.push('Next*');
-
-  const forecastProfit = [...Array(vals.length).fill(null), forecast];
-  forecastProfit[vals.length-1] = profits[profits.length-1];
-
   document.getElementById('revLegend').innerHTML = `
     <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.85);box-shadow:0 0 6px rgba(59,130,246,0.4)"></div>Profit</div>
     <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.7)"></div>Expenses</div>
@@ -1016,6 +1008,7 @@ function buildRevenueChart() {
   labels.push('Next*');
 
   revChartInst = new Chart(document.getElementById('revChart'), {
+    type: 'bar',
     data: {
       labels: [...labels],
       datasets: [
