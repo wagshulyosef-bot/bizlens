@@ -51,6 +51,7 @@ async function saveToRailway(vars) {
   } catch(e) { console.error('Failed to save to Railway:', e); }
 }
 
+let saveTimer = null;
 function saveDevices() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
@@ -336,7 +337,7 @@ app.post('/api/analyze', async (req, res) => {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1000, messages })
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 2500, messages })
     });
     const data = await response.json();
     if (!response.ok) return res.status(response.status).json({ error: data.error?.message || 'API error' });
