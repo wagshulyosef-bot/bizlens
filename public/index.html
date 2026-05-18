@@ -1131,9 +1131,21 @@ async function runAI() {
     if (res.status === 403) { handleStatus('revoked'); return; }
     const data = await res.json();
     const text = data.content.map(b => b.text||'').join('');
-    const result = JSON.parse(text.replace(/```json|```/g,'').trim());
+    let result;
+    try {
+      result = JSON.parse(text.replace(/```json|```/g,'').trim());
+    } catch(parseErr) {
+      console.error('JSON parse error:', parseErr, 'Raw text:', text);
+      document.getElementById('aiLoading').style.display = 'none';
+      document.getElementById('aiText').style.display = 'block';
+      document.getElementById('aiText').textContent = 'AI returned an unexpected response. Please try refreshing.';
+      document.getElementById('insightsList').innerHTML = '';
+      document.getElementById('priceTableWrap').innerHTML = '';
+      return;
+    }
     renderAI(result);
   } catch(e) {
+    console.error('runAI error:', e);
     document.getElementById('aiLoading').style.display = 'none';
     document.getElementById('aiText').style.display = 'block';
     document.getElementById('aiText').textContent = 'Could not connect to AI server. Please try again.';
