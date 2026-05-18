@@ -431,9 +431,18 @@
     <div class="metrics-strip" id="metricsStrip"></div>
     <div class="dash-grid" style="margin-bottom:1.5rem;">
       <div class="dash-card">
-        <div class="dash-card-title">Revenue trend <span id="forecastBadge" style="font-size:11px;color:var(--muted);font-weight:400;"></span></div>
+        <div class="dash-card-title" style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            Revenue trend <span id="forecastBadge" style="font-size:11px;color:var(--muted);font-weight:400;"></span>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <button id="chartToggleBar" onclick="setChartMode('bar')" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent2);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">Bar</button>
+            <button id="chartTogglePie" onclick="setChartMode('pie')" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">Pie</button>
+          </div>
+        </div>
         <div class="legend-row" id="revLegend"></div>
-        <div style="position:relative;height:220px;"><canvas id="revChart"></canvas></div>
+        <div id="barChartWrap" style="position:relative;height:220px;"><canvas id="revChart"></canvas></div>
+        <div id="pieChartWrap" style="display:none;position:relative;height:220px;"><canvas id="revPieChart"></canvas></div>
       </div>
       <div class="dash-card">
         <div class="dash-card-title">Sales mix</div>
@@ -954,14 +963,31 @@ function buildMetrics() {
     </div>`).join('');
 }
 
+let revPieChartInst = null;
+let chartMode = 'bar';
+
+function setChartMode(mode) {
+  chartMode = mode;
+  document.getElementById('barChartWrap').style.display = mode === 'bar' ? 'block' : 'none';
+  document.getElementById('pieChartWrap').style.display = mode === 'pie' ? 'block' : 'none';
+  document.getElementById('chartToggleBar').style.cssText = mode === 'bar'
+    ? 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent2);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;'
+    : 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;';
+  document.getElementById('chartTogglePie').style.cssText = mode === 'pie'
+    ? 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent2);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;'
+    : 'font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif;font-weight:600;';
+}
+
 function buildRevenueChart() {
   if (revChartInst) revChartInst.destroy();
+  if (revPieChartInst) revPieChartInst.destroy();
+
   const vals = state.months;
   if (!vals.some(v => v > 0)) return;
 
   const expenses = state.expenses || [];
   const profits = vals.map((rev, i) => Math.max(0, rev - (expenses[i] || 0)));
-  const expenseData = vals.map((rev, i) => Math.min(expenses[i] || 0, rev));
+  const expenseData = vals.map((rev, i) => -(expenses[i] || 0)); // negative for below x-axis
 
   const last = vals[vals.length-1];
   const trend = vals.length >= 3 ? (vals[vals.length-1] - vals[vals.length-3]) / Math.max(vals[vals.length-3],1) : 0;
@@ -978,9 +1004,10 @@ function buildRevenueChart() {
 
   document.getElementById('revLegend').innerHTML = `
     <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.85);box-shadow:0 0 6px rgba(59,130,246,0.4)"></div>Profit</div>
-    <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.6)"></div>Expenses</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.7)"></div>Expenses</div>
     <div class="legend-item"><div class="legend-dot" style="background:rgba(99,102,241,0.45)"></div>Forecast</div>`;
 
+  // BAR CHART — profit above, expenses below x-axis
   revChartInst = new Chart(document.getElementById('revChart'), {
     type: 'bar',
     data: {
@@ -992,15 +1019,15 @@ function buildRevenueChart() {
           backgroundColor: 'rgba(59,130,246,0.85)',
           borderRadius: { topLeft: 5, topRight: 5 },
           borderSkipped: false,
-          stack: 'actual'
+          order: 1
         },
         {
           label: 'Expenses',
           data: [...expenseData, null],
-          backgroundColor: 'rgba(239,68,68,0.6)',
-          borderRadius: 0,
+          backgroundColor: 'rgba(239,68,68,0.7)',
+          borderRadius: { bottomLeft: 5, bottomRight: 5 },
           borderSkipped: false,
-          stack: 'actual'
+          order: 2
         },
         {
           label: 'Forecast',
@@ -1008,7 +1035,7 @@ function buildRevenueChart() {
           backgroundColor: 'rgba(99,102,241,0.45)',
           borderRadius: { topLeft: 5, topRight: 5 },
           borderSkipped: false,
-          stack: 'forecast'
+          order: 3
         }
       ]
     },
@@ -1017,8 +1044,41 @@ function buildRevenueChart() {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: '#5A6A85', font: { size: 11 } }, grid: { display: false }, border: { display: false }, stacked: true },
-        y: { ticks: { color: '#5A6A85', font: { size: 11 }, callback: v => '$' + (v >= 1000 ? Math.round(v/1000) + 'k' : v) }, grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, stacked: true }
+        x: { ticks: { color: '#5A6A85', font: { size: 11 } }, grid: { display: false }, border: { display: false } },
+        y: {
+          ticks: { color: '#5A6A85', font: { size: 11 }, callback: v => '$' + (Math.abs(v) >= 1000 ? Math.round(Math.abs(v)/1000) + 'k' : Math.abs(v)) },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false }
+        }
+      }
+    }
+  });
+
+  // PIE CHART — total profit vs total expenses
+  const totalProfit = profits.reduce((a,b) => a+b, 0);
+  const totalExpenses = expenses.reduce((a,b) => a+b, 0);
+  revPieChartInst = new Chart(document.getElementById('revPieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Profit', 'Expenses'],
+      datasets: [{
+        data: [Math.max(0, totalProfit), Math.max(0, totalExpenses)],
+        backgroundColor: ['rgba(59,130,246,0.85)', 'rgba(239,68,68,0.7)'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` $${ctx.raw.toLocaleString()} (${Math.round(ctx.raw / (totalProfit + totalExpenses) * 100)}%)`
+          }
+        }
       }
     }
   });
