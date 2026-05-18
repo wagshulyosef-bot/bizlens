@@ -1007,19 +1007,26 @@ function buildRevenueChart() {
     <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.7)"></div>Expenses</div>
     <div class="legend-item"><div class="legend-dot" style="background:rgba(99,102,241,0.45)"></div>Forecast</div>`;
 
-  // BAR CHART — profit above, expenses below x-axis
+  const forecastProfit = [...Array(vals.length).fill(null), forecast];
+  forecastProfit[vals.length-1] = profits[profits.length-1];
+
+  const now = new Date();
+  const labels = [];
+  for (let i = 7; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth()-i, 1); labels.push(MONTHS_LABELS[d.getMonth()]); }
+  labels.push('Next*');
+
   revChartInst = new Chart(document.getElementById('revChart'), {
-    type: 'bar',
     data: {
       labels: [...labels],
       datasets: [
         {
           label: 'Profit',
-          data: [...profits, null],
-          backgroundColor: 'rgba(59,130,246,0.85)',
+          data: [...profits, forecastProfit[vals.length]],
+          backgroundColor: (ctx) => ctx.dataIndex === vals.length ? 'rgba(99,102,241,0.45)' : 'rgba(59,130,246,0.85)',
           borderRadius: { topLeft: 5, topRight: 5 },
           borderSkipped: false,
-          order: 1
+          barPercentage: 0.5,
+          categoryPercentage: 0.8
         },
         {
           label: 'Expenses',
@@ -1027,15 +1034,8 @@ function buildRevenueChart() {
           backgroundColor: 'rgba(239,68,68,0.7)',
           borderRadius: { bottomLeft: 5, bottomRight: 5 },
           borderSkipped: false,
-          order: 2
-        },
-        {
-          label: 'Forecast',
-          data: forecastProfit,
-          backgroundColor: 'rgba(99,102,241,0.45)',
-          borderRadius: { topLeft: 5, topRight: 5 },
-          borderSkipped: false,
-          order: 3
+          barPercentage: 0.5,
+          categoryPercentage: 0.8
         }
       ]
     },
@@ -1046,7 +1046,7 @@ function buildRevenueChart() {
       scales: {
         x: { ticks: { color: '#5A6A85', font: { size: 11 } }, grid: { display: false }, border: { display: false } },
         y: {
-          ticks: { color: '#5A6A85', font: { size: 11 }, callback: v => '$' + (Math.abs(v) >= 1000 ? Math.round(Math.abs(v)/1000) + 'k' : Math.abs(v)) },
+          ticks: { color: '#5A6A85', font: { size: 11 }, callback: v => '$' + (Math.abs(v) >= 1000 ? (v < 0 ? '-' : '') + Math.round(Math.abs(v)/1000) + 'k' : v) },
           grid: { color: 'rgba(255,255,255,0.04)' },
           border: { display: false }
         }
