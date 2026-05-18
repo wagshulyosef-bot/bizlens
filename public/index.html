@@ -1215,28 +1215,33 @@ function saveHitlist() {
 
 function renderHitlist() {
   const body = document.getElementById('hitlistBody');
-  const empty = document.getElementById('hitlistEmpty');
   const active = hitlistTasks.filter(t => !t.done);
   const done = hitlistTasks.filter(t => t.done);
-  if (!hitlistTasks.length) { empty.style.display = 'block'; body.innerHTML = ''; body.appendChild(empty); return; }
-  empty.style.display = 'none';
+
+  if (!hitlistTasks.length) {
+    body.innerHTML = `<div class="hitlist-empty"><div class="hitlist-empty-icon">📋</div><div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;">Your hit list is empty</div><div style="font-size:14px;color:var(--muted);">Add tasks below — the AI will organize and prioritize them automatically.</div></div>`;
+    return;
+  }
+
   const catColors = { urgent: 'cat-urgent', 'follow-up': 'cat-follow-up', admin: 'cat-admin', growth: 'cat-growth', personal: 'cat-personal' };
   let html = '';
+
   if (active.length) {
     html += `<div class="hitlist-section-label">To do (${active.length})</div>`;
     html += active.map(t => `
-      <div class="task-item${t.done ? ' done' : ''}" id="task_${t.id}">
-        <div class="task-checkbox${t.done ? ' checked' : ''}" onclick="toggleTask('${t.id}')"></div>
+      <div class="task-item" id="task_${t.id}">
+        <div class="task-checkbox" onclick="toggleTask('${t.id}')"></div>
         <div class="task-content">
           <div class="task-text">${escHtml(t.text)}</div>
           <div class="task-meta">
-            ${t.category ? `<span class="task-category ${catColors[t.category] || 'cat-personal'}">${t.category}</span>` : ''}
+            ${t.category ? `<span class="task-category ${catColors[t.category] || 'cat-personal'}">${t.category}</span>` : '<span class="task-category cat-personal" style="opacity:0.5;">organizing...</span>'}
             ${t.aiNote ? `<span class="task-ai-note">✦ ${escHtml(t.aiNote)}</span>` : ''}
           </div>
         </div>
         <button class="task-delete" onclick="deleteTask('${t.id}')">×</button>
       </div>`).join('');
   }
+
   if (done.length) {
     html += `<div class="hitlist-section-label" style="margin-top:1.5rem;">Done (${done.length})</div>`;
     html += done.map(t => `
@@ -1246,39 +1251,64 @@ function renderHitlist() {
         <button class="task-delete" onclick="deleteTask('${t.id}')">×</button>
       </div>`).join('');
   }
+
   body.innerHTML = html;
 }
 
 function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-async function addTask() {
-  const input = document.getElementById('hitlistInput');
-  const text = input.value.trim(); if (!text) return;
-  input.value = '';
-  const id = Date.now().toString();
-  hitlistTasks.push({ id, text, done: false, category: null, aiNote: null, priority: 99 });
-  saveHitlist(); renderHitlist();
-  // Organize with AI in background
-  organizeWithAI();
+// Simple local grammar fix — capitalize first letter, ensure ends with period if it looks like a sentence
+function localClean(text) {
+  let t = text.trim();
+  if (!t) return t;
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+  return t;
 }
 
-async function organizeWithAI() {
-  const activeTasks = hitlistTasks.filter(t => !t.done && !t.category);
-  if (!activeTasks.length) return;
+async function addTask() {
+  const input = document.getElementById('hitlistInput');
+  const raw = input.value.trim();
+  if (!raw) return;
+  input.value = '';
+
+  const id = Date.now().toString();
+  // Add immediately with local clean so it shows right away
+  const cleanText = localClean(raw);
+  hitlistTasks.push({ id, text: cleanText, done: false, category: null, aiNote: null, priority: 99 });
+  saveHitlist();
+  renderHitlist();
+
+  // Then organize + grammar correct with AI in background
+  organizeWithAI([id]);
+}
+
+async function organizeWithAI(newIds) {
+  const targets = newIds
+    ? hitlistTasks.filter(t => newIds.includes(t.id))
+    : hitlistTasks.filter(t => !t.done && !t.category);
+  if (!targets.length) return;
+
   try {
     const businessContext = state.bizName ? `${state.bizName}, ${state.industry}` : 'small business';
     const res = await fetch(`${SERVER}/api/hitlist/organize`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, tasks: activeTasks.map(t => t.text), businessContext })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fingerprint, tasks: targets.map(t => t.text), businessContext })
     });
     const data = await res.json();
     if (data.tasks?.length) {
       data.tasks.forEach((aiTask, i) => {
-        const match = hitlistTasks.find(t => t.text === activeTasks[i]?.text);
-        if (match) { match.category = aiTask.category; match.aiNote = aiTask.aiNote || null; match.priority = aiTask.priority || 99; }
+        const match = hitlistTasks.find(t => t.id === targets[i]?.id);
+        if (match) {
+          if (aiTask.text) match.text = aiTask.text; // AI-corrected text
+          match.category = aiTask.category;
+          match.aiNote = aiTask.aiNote || null;
+          match.priority = aiTask.priority || 99;
+        }
       });
       hitlistTasks.sort((a, b) => { if (a.done !== b.done) return a.done ? 1 : -1; return (a.priority || 99) - (b.priority || 99); });
-      saveHitlist(); renderHitlist();
+      saveHitlist();
+      renderHitlist();
     }
   } catch(e) {}
 }
@@ -1290,12 +1320,14 @@ function toggleTask(id) {
 
 function deleteTask(id) {
   hitlistTasks = hitlistTasks.filter(t => t.id !== id);
-  saveHitlist(); renderHitlist();
+  saveHitlist();
+  renderHitlist();
 }
 
 function clearDoneTasks() {
   hitlistTasks = hitlistTasks.filter(t => !t.done);
-  saveHitlist(); renderHitlist();
+  saveHitlist();
+  renderHitlist();
 }
 
 init();
