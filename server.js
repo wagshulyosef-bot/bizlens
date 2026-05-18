@@ -12,6 +12,9 @@ const RAILWAY_ENVIRONMENT_ID = process.env.RAILWAY_ENVIRONMENT_ID;
 const RAILWAY_SERVICE_ID = process.env.RAILWAY_SERVICE_ID;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 const BASE_URL = process.env.BASE_URL || 'https://bizlens-production.up.railway.app';
 
 app.use(cors({ origin: true, credentials: true }));
@@ -21,7 +24,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // DEVICE STORE
 let devices = {};
 let googleTokens = {};
+let twilioNumbers = {}; // fingerprint -> { phoneNumber, verified }
 let saveTimer = null;
+let tokenSaveTimer = null;
 
 function loadDevices() {
   try {
@@ -35,6 +40,13 @@ function loadGoogleTokens() {
     const raw = process.env.GOOGLE_TOKENS_JSON;
     if (raw) { googleTokens = JSON.parse(raw); console.log(`Loaded ${Object.keys(googleTokens).length} Google tokens`); }
   } catch(e) { googleTokens = {}; }
+}
+
+function loadTwilioNumbers() {
+  try {
+    const raw = process.env.TWILIO_NUMBERS_JSON;
+    if (raw) { twilioNumbers = JSON.parse(raw); console.log(`Loaded ${Object.keys(twilioNumbers).length} Twilio numbers`); }
+  } catch(e) { twilioNumbers = {}; }
 }
 
 async function saveToRailway(vars) {
@@ -59,7 +71,6 @@ function saveDevices() {
   }, 500);
 }
 
-let tokenSaveTimer = null;
 function saveGoogleTokens() {
   if (tokenSaveTimer) clearTimeout(tokenSaveTimer);
   tokenSaveTimer = setTimeout(async () => {
@@ -68,8 +79,16 @@ function saveGoogleTokens() {
   }, 500);
 }
 
+function saveTwilioNumbers() {
+  setTimeout(async () => {
+    await saveToRailway({ TWILIO_NUMBERS_JSON: JSON.stringify(twilioNumbers) });
+    console.log('Twilio numbers saved to Railway');
+  }, 500);
+}
+
 loadDevices();
 loadGoogleTokens();
+loadTwilioNumbers();
 
 function adminAuth(req, res, next) {
   if (req.headers['x-admin-token'] !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
@@ -173,31 +192,18 @@ app.post('/api/calendar/create', deviceAuth, async (req, res) => {
   const { fingerprint, title, description, start, end, attendees } = req.body;
   try {
     const accessToken = await getValidAccessToken(fingerprint);
-
-    // Ensure datetime strings are in correct format for Pacific time
-    // If the datetime doesn't have timezone info, treat it as Pacific time
     function toCalendarDateTime(dt) {
       if (!dt) return new Date().toISOString();
-      // If already has timezone offset, use as-is
-      if (dt.includes('+') || dt.includes('Z') || (dt.includes('-') && dt.lastIndexOf('-') > 7)) {
-        return new Date(dt).toISOString();
-      }
-      // Otherwise treat as Pacific local time by appending offset
-      // Pacific is UTC-7 (PDT) or UTC-8 (PST) — use -07:00 as default
+      if (dt.includes('+') || dt.includes('Z') || (dt.includes('-') && dt.lastIndexOf('-') > 7)) return new Date(dt).toISOString();
       return new Date(dt + '-07:00').toISOString();
     }
-
-    const startDT = toCalendarDateTime(start);
-    const endDT = toCalendarDateTime(end);
-
     const calRes = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        summary: title,
-        description,
-        start: { dateTime: startDT, timeZone: 'America/Los_Angeles' },
-        end: { dateTime: endDT, timeZone: 'America/Los_Angeles' },
+        summary: title, description,
+        start: { dateTime: toCalendarDateTime(start), timeZone: 'America/Los_Angeles' },
+        end: { dateTime: toCalendarDateTime(end), timeZone: 'America/Los_Angeles' },
         attendees: attendees?.map(e => ({ email: e })) || []
       })
     });
@@ -207,10 +213,72 @@ app.post('/api/calendar/create', deviceAuth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// TWILIO SMS
+app.post('/api/twilio/connect', deviceAuth, async (req, res) => {
+  const { fingerprint, phoneNumber } = req.body;
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    return res.status(500).json({ error: 'Twilio not configured on server. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER to Railway variables.' });
+  }
+  if (!phoneNumber) return res.status(400).json({ error: 'Phone number required' });
+
+  // Format phone number
+  const cleaned = phoneNumber.replace(/\D/g, '');
+  const formatted = cleaned.startsWith('1') ? `+${cleaned}` : `+1${cleaned}`;
+
+  twilioNumbers[fingerprint] = { phoneNumber: formatted, verified: false, connectedAt: new Date().toISOString() };
+  saveTwilioNumbers();
+
+  // Send verification SMS
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
+    const smsRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': authHeader, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ From: TWILIO_PHONE_NUMBER, To: formatted, Body: 'You\'ve connected your phone number to Clarity AI Pro! You can now send and receive SMS through the AI agent.' })
+    });
+    const smsData = await smsRes.json();
+    if (!smsRes.ok) throw new Error(smsData.message || 'SMS error');
+    twilioNumbers[fingerprint].verified = true;
+    saveTwilioNumbers();
+    res.json({ ok: true, phoneNumber: formatted });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/twilio/status', deviceAuth, (req, res) => {
+  const info = twilioNumbers[req.body.fingerprint];
+  res.json({ connected: !!(info?.verified), phoneNumber: info?.phoneNumber || null });
+});
+
+app.post('/api/twilio/send', deviceAuth, async (req, res) => {
+  const { fingerprint, to, body } = req.body;
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    return res.status(500).json({ error: 'Twilio not configured' });
+  }
+  const info = twilioNumbers[fingerprint];
+  if (!info?.verified) return res.status(403).json({ error: 'Phone number not connected' });
+
+  try {
+    const cleaned = to.replace(/\D/g, '');
+    const toFormatted = cleaned.startsWith('1') ? `+${cleaned}` : `+1${cleaned}`;
+    const authHeader = 'Basic ' + Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
+    const smsRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': authHeader, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ From: TWILIO_PHONE_NUMBER, To: toFormatted, Body: body })
+    });
+    const data = await smsRes.json();
+    if (!smsRes.ok) throw new Error(data.message || 'SMS error');
+    res.json({ ok: true, sid: data.sid });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // AI AGENT
 app.post('/api/agent', deviceAuth, async (req, res) => {
   const { fingerprint, messages, businessContext } = req.body;
   const tokens = googleTokens[fingerprint];
+  const twilioInfo = twilioNumbers[fingerprint];
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
   const today = now.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const todayISO = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -220,17 +288,19 @@ BUSINESS CONTEXT:
 ${businessContext || 'No business context provided.'}
 
 GOOGLE CONNECTION: ${tokens ? `Connected as ${tokens.email}` : 'Not connected to Google'}
+SMS CONNECTION: ${twilioInfo?.verified ? `Connected — phone ${twilioInfo.phoneNumber}` : 'Not connected'}
 
 TODAY IS: ${today} (${todayISO}) Pacific Time. Use this to calculate exact dates when the user says things like "next Friday" or "Thursday". Always use the correct YYYY-MM-DD date in your response.
 
-You can help draft emails, calendar events, and invoices. When writing emails, write them the way a real person would — casual, direct, short sentences, no corporate fluff, no "I hope this email finds you well", no "please don't hesitate to reach out". Sound like the business owner themselves wrote it. When drafting something, respond ONLY with this JSON format:
+You can help draft emails, calendar events, invoices, and SMS messages. When writing emails or texts, write them the way a real person would — casual, direct, short sentences, no corporate fluff. Sound like the business owner themselves wrote it. When drafting something, respond ONLY with this JSON format:
 {
   "message": "conversational response explaining what you drafted",
   "draft": {
-    "type": "email|calendar|invoice|none",
+    "type": "email|calendar|invoice|sms|none",
     "email": { "to": "", "subject": "", "body": "" },
     "calendar": { "title": "", "description": "", "start": "2026-05-10T16:30:00", "end": "2026-05-10T17:30:00", "attendees": [] },
-    "invoice": { "client": "", "items": [{"description": "", "amount": 0}], "total": 0, "dueDate": "" }
+    "invoice": { "client": "", "items": [{"description": "", "amount": 0}], "total": 0, "dueDate": "" },
+    "sms": { "to": "", "body": "" }
   }
 }
 
@@ -247,6 +317,48 @@ For regular conversation with no draft, use type "none". Be concise and specific
     const text = data.content.map(b => b.text || '').join('');
     try { res.json(JSON.parse(text.replace(/```json|```/g,'').trim())); }
     catch { res.json({ message: text, draft: { type: 'none' } }); }
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// AI HIT LIST ORGANIZER
+app.post('/api/hitlist/organize', deviceAuth, async (req, res) => {
+  const { fingerprint, tasks, businessContext } = req.body;
+  if (!tasks?.length) return res.json({ tasks: [] });
+
+  const systemPrompt = `You are an AI business assistant. The user has given you a list of tasks. Organize and prioritize them based on their business context.
+
+BUSINESS CONTEXT: ${businessContext || 'Small business owner'}
+
+Return ONLY raw JSON (no markdown):
+{
+  "tasks": [
+    {
+      "id": "unique_id",
+      "text": "original task text",
+      "category": "urgent|follow-up|admin|growth|personal",
+      "priority": 1,
+      "aiNote": "brief reason for priority or tip (optional, max 10 words)"
+    }
+  ]
+}
+
+Priority 1 is highest. Categories: urgent (time-sensitive), follow-up (client/vendor contact), admin (paperwork/operations), growth (business development), personal (non-business).
+Order tasks from highest to lowest priority. Be practical and specific.`;
+
+  try {
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5', max_tokens: 1500, system: systemPrompt,
+        messages: [{ role: 'user', content: `Organize these tasks:\n${tasks.map((t,i) => `${i+1}. ${t}`).join('\n')}` }]
+      })
+    });
+    const data = await aiRes.json();
+    if (!aiRes.ok) throw new Error(data.error?.message || 'AI error');
+    const text = data.content.map(b => b.text || '').join('');
+    const result = JSON.parse(text.replace(/```json|```/g,'').trim());
+    res.json(result);
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -273,7 +385,6 @@ Be conversational, direct, and practical. Reference their business context when 
       return res.status(aiRes.status).json({ error: err.error?.message || 'AI error' });
     }
 
-    // Stream response to client
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -375,5 +486,6 @@ app.listen(PORT, () => {
   console.log(`API key: ${ANTHROPIC_API_KEY ? '✓ loaded' : '✗ MISSING'}`);
   console.log(`Admin password: ${ADMIN_PASSWORD !== 'changeme' ? '✓ set' : '⚠ using default'}`);
   console.log(`Google OAuth: ${GOOGLE_CLIENT_ID ? '✓ configured' : '⚠ not configured'}`);
+  console.log(`Twilio SMS: ${TWILIO_ACCOUNT_SID ? '✓ configured' : '⚠ not configured'}`);
   console.log(`Railway persistence: ${RAILWAY_API_TOKEN ? '✓ enabled' : '⚠ disabled'}`);
 });
