@@ -325,7 +325,7 @@ app.post('/api/hitlist/organize', deviceAuth, async (req, res) => {
   const { fingerprint, tasks, businessContext } = req.body;
   if (!tasks?.length) return res.json({ tasks: [] });
 
-  const systemPrompt = `You are an AI business assistant. The user has given you a list of tasks. Organize and prioritize them based on their business context.
+  const systemPrompt = `You are an AI business assistant. The user has given you a list of tasks. Fix any spelling or grammar mistakes, capitalize the first word, and organize and prioritize them based on their business context.
 
 BUSINESS CONTEXT: ${businessContext || 'Small business owner'}
 
@@ -333,8 +333,8 @@ Return ONLY raw JSON (no markdown):
 {
   "tasks": [
     {
-      "id": "unique_id",
-      "text": "original task text",
+      "id": "same_position_as_input",
+      "text": "corrected task text with proper spelling, grammar, and capitalization",
       "category": "urgent|follow-up|admin|growth|personal",
       "priority": 1,
       "aiNote": "brief reason for priority or tip (optional, max 10 words)"
@@ -343,7 +343,7 @@ Return ONLY raw JSON (no markdown):
 }
 
 Priority 1 is highest. Categories: urgent (time-sensitive), follow-up (client/vendor contact), admin (paperwork/operations), growth (business development), personal (non-business).
-Order tasks from highest to lowest priority. Be practical and specific.`;
+Order tasks from highest to lowest priority. Fix spelling and grammar but keep the original meaning. Be practical and specific.`;
 
   try {
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
